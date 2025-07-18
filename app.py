@@ -1972,40 +1972,49 @@ def show_enhanced_results_table(optimizer, summary):
 
 
 def show_enhanced_supplier_breakdown(optimizer, summary):
-    """Show supplier breakdown with allocation metrics"""
+    """Show enhanced supplier breakdown with allocation details - FIXED"""
 
-    st.write("---")  # Separator
-    show_unfulfilled_products_table(optimizer)
+    st.subheader("🏢 Supplier Order Breakdown")
 
-    st.subheader("🏢 Supplier Performance & Allocation")
+    if not hasattr(optimizer, "optimization_results") or not optimizer.optimization_results:
+        st.warning("⚠️ No optimization results available")
+        return
+
+    supplier_orders = optimizer.optimization_results.get("supplier_orders", {})
+    if not supplier_orders:
+        st.warning("⚠️ No supplier orders found")
+        return
 
     supplier_data = []
-    for supplier, stats in summary["supplier_breakdown"].items():
-        # NEW: Calculate cost comparison metrics for this supplier
+
+    for supplier, items in supplier_orders.items():
+        if not items:
+            continue
+
+        stats = {
+            "items": len(items),
+            "total_value": sum(item.get("total_price", 0) for item in items),
+            "unique_products": len(set(item.get("ean_code", "") for item in items)),
+            "split_order_items": sum(
+                1 for item in items if item.get("is_split_order", False)
+            ),
+            "single_order_items": sum(
+                1 for item in items if not item.get("is_split_order", False)
+            ),
+        }
+
+        # Calculate cost comparisons if internal data is available
+        total_cost_supplier = stats["total_value"]
         total_cost_stock_avg = 0
-        total_cost_supplier = 0
         items_with_stock_avg = 0
 
-        # Get supplier's orders from optimization results
-        if (
-            hasattr(optimizer, "optimization_results")
-            and optimizer.optimization_results
-        ):
-            supplier_orders = optimizer.optimization_results.get(
-                "supplier_orders", {}
-            ).get(supplier, [])
+        for item in items:
+            allocated_qty = item.get("quantity", 0)
 
-            for order_item in supplier_orders:
-                allocated_qty = order_item.get("quantity", 0)
-                quote_price = order_item.get("unit_price", 0)
-                total_cost_supplier += quote_price * allocated_qty
-
-                # Get stock average price if available
-                ean = str(order_item.get("ean_code", "")).strip()
-                if (
-                    hasattr(optimizer, "internal_data_lookup")
-                    and ean in optimizer.internal_data_lookup
-                ):
+            # Get stock average price if available
+            if hasattr(optimizer, "internal_data_lookup"):
+                ean = str(item.get("ean_code", "")).strip()
+                if ean in optimizer.internal_data_lookup:
                     internal_product = optimizer.internal_data_lookup[ean]
                     stock_avg_price = internal_product.get("stock_avg_price")
 
@@ -2043,15 +2052,50 @@ def show_enhanced_supplier_breakdown(optimizer, summary):
             }
         )
 
-    # Sort by order value
-    supplier_df = pd.DataFrame(supplier_data)
-    supplier_df["_sort_value"] = [
-        float(val.replace("€", "")) for val in supplier_df["Order Value"]
-    ]
-    supplier_df = supplier_df.sort_values("_sort_value", ascending=False).drop(
-        "_sort_value", axis=1
-    )
+    # Create DataFrame with error handling
+    if not supplier_data:
+        st.warning("⚠️ No supplier data to display")
+        return
 
+    supplier_df = pd.DataFrame(supplier_data)
+    
+    # FIXED: Add error handling for Order Value column
+    try:
+        # Check if Order Value column exists
+        if "Order Value" in supplier_df.columns:
+            # Sort by order value with safe conversion
+            sort_values = []
+            for val in supplier_df["Order Value"]:
+                try:
+                    # Extract numeric value from string like "€123.45"
+                    if isinstance(val, str) and "€" in val:
+                        numeric_val = float(val.replace("€", "").replace(",", ""))
+                        sort_values.append(numeric_val)
+                    else:
+                        sort_values.append(0)  # Default value for invalid entries
+                except (ValueError, AttributeError):
+                    sort_values.append(0)  # Default value for conversion errors
+            
+            supplier_df["_sort_value"] = sort_values
+            supplier_df = supplier_df.sort_values("_sort_value", ascending=False).drop(
+                "_sort_value", axis=1
+            )
+        else:
+            st.error("❌ Error: Order Value column missing from supplier data")
+            st.write("Available columns:", list(supplier_df.columns))
+            return
+            
+    except Exception as e:
+        st.error(f"❌ Error processing supplier data: {str(e)}")
+        st.write("Debug info:")
+        st.write(f"DataFrame shape: {supplier_df.shape}")
+        st.write(f"Columns: {list(supplier_df.columns)}")
+        if not supplier_df.empty:
+            st.write("Sample data:")
+            st.dataframe(supplier_df.head(2))
+        return
+
+    # Display the table
     st.dataframe(supplier_df, use_container_width=True)
 
     # NEW: Cost comparison explanation
@@ -2579,3 +2623,4 @@ def generate_unfulfilled_summary_report(unfulfilled_df, optimizer):
 # Run the app
 if __name__ == "__main__":
     main()
+
