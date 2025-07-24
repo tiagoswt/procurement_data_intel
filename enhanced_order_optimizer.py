@@ -218,9 +218,7 @@ class EnhancedOrderOptimizer:
 
             # Prepare enhanced CSV data
             csv_data = []
-            csv_data.append(
-                "EAN;Product_Name;Quantity;Unit_Price;Total_Price;Allocation_Type;Split_Rank;Stock_Avg_Price;Savings_vs_Stock_Avg;Original_Reference"
-            )
+            csv_data.append("EAN;Product_Name;Quantity;Unit_Price;Total_Price")
 
             total_value = 0
             split_items = 0
@@ -232,17 +230,7 @@ class EnhancedOrderOptimizer:
                 savings_vs_stock_avg = ""
 
                 if stock_avg_price and isinstance(stock_avg_price, (int, float)):
-                    savings = stock_avg_price - item["unit_price"]
-                    savings_vs_stock_avg = f"{savings:.2f}".replace(".", ",")
                     stock_avg_price = f"{stock_avg_price:.2f}".replace(".", ",")
-
-                # Format allocation type
-                if item.get("is_split_order", False):
-                    allocation_type = f"Split #{item.get('split_rank', 1)}"
-                    split_items += 1
-                else:
-                    allocation_type = "Single"
-                    single_items += 1
 
                 csv_row = [
                     item["ean_code"],
@@ -250,27 +238,10 @@ class EnhancedOrderOptimizer:
                     str(item["quantity"]),
                     f"{item['unit_price']:.2f}".replace(".", ","),
                     f"{item['total_price']:.2f}".replace(".", ","),
-                    allocation_type,
-                    str(item.get("split_rank", "")),
-                    str(stock_avg_price),
-                    str(savings_vs_stock_avg),
-                    item.get("original_reference", ""),
                 ]
 
                 csv_data.append(";".join(csv_row))
                 total_value += item["total_price"]
-
-            # Add summary rows
-            csv_data.extend(
-                [
-                    "",
-                    f"SUMMARY;;;;;;;",
-                    f"Total Items;{len(items)};;;;;;",
-                    f"Single Orders;{single_items};;;;;;",
-                    f"Split Orders;{split_items};;;;;;",
-                    f"Total Value;{total_value:.2f};;;;;;".replace(".", ","),
-                ]
-            )
 
             # Create filename and content
             safe_supplier = "".join(
