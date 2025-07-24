@@ -661,3 +661,4 @@ def auto_order_optimization_tab():
         st.info("💡 Process these files in the main 'Order Optimization' tab")
     else:
         st.info(f"📂 Add order files to: `{file_manager.order_files_folder}`")
+
