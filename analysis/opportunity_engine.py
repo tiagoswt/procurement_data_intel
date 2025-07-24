@@ -19,6 +19,15 @@ class SimpleOpportunityEngine:
         self.internal_data = []
         self.opportunities = []
 
+    def _safe_int_conversion(self, value, default=0):
+        """Safely convert value to int, handling NaN and None"""
+        if pd.isna(value) or value is None:
+            return default
+        try:
+            return int(float(value))
+        except (ValueError, TypeError):
+            return default
+
     def load_internal_data(self, uploaded_file) -> bool:
         """Load internal product data from CSV file"""
         try:
@@ -83,20 +92,23 @@ class SimpleOpportunityEngine:
                         "brand": str(row.get("brand", "")),
                         "description": str(row.get("itemDescriptionEN", "")),
                         "capacity": str(row.get("itemCapacity", "")),
-                        "stock": int(row.get("stock", 0)),
-                        # UPDATED: Store ALL sales periods
-                        "sales90d": int(row.get("sales90d", 0)),
-                        "sales180d": int(row.get("sales180d", 0)),
-                        "sales365d": int(row.get("sales365d", 0)),
-                        "sales_next90d_lastyear": int(
-                            row.get("salesnext90d_lastyear", 0)
+                        "stock": self._safe_int_conversion(row.get("stock"), 0),
+                        "sales90d": self._safe_int_conversion(row.get("sales90d"), 0),
+                        "sales180d": self._safe_int_conversion(row.get("sales180d"), 0),
+                        "sales365d": self._safe_int_conversion(row.get("sales365d"), 0),
+                        "sales_next90d_lastyear": self._safe_int_conversion(
+                            row.get("salesnext90d_lastyear"), 0
+                        ),
+                        # FIX: Add the missing qntPendingToDeliver field
+                        "qntPendingToDeliver": self._safe_int_conversion(
+                            row.get("qntPendingToDeliver"), 0
                         ),
                         "best_buy_price": best_buy_price,
                         "supplier_price": supplier_price,
                         "stock_avg_price": stock_avg_price,
                         "best_supplier": str(row.get("bestbuyPrice_supplier(12M)", "")),
                         "is_bestseller": is_bestseller,
-                        "bestseller_rank": bestseller_rank,  # Store the actual rank number
+                        "bestseller_rank": bestseller_rank,
                         "is_active": bool(row.get("isActive", True)),
                     }
 
@@ -277,21 +289,24 @@ class SimpleOpportunityEngine:
         self, internal_product: Dict, sales_period: str = "sales90d"
     ) -> int:
         """
-        Calculate simple net need using specified sales period
-        UPDATED: Support multiple sales periods (90d, 180d, 365d)
+        Calculate simple net need using specified sales period INCLUDING qntPendingToDeliver
+        UPDATED: New formula: sales - current_stock - qntPendingToDeliver
         """
         sales = internal_product.get(sales_period, 0)
         current_stock = internal_product.get("stock", 0)
+        qnt_pending_to_deliver = internal_product.get("qntPendingToDeliver", 0)
 
-        # Simple formula: if we sold X in period and have Y in stock, we need max(0, X-Y)
-        net_need = max(0, sales - current_stock)
+        # Updated formula: if we sold X in period, have Y in stock, and Z pending delivery
+        # we need max(0, X - Y - Z)
+        net_need = max(0, sales - current_stock - qnt_pending_to_deliver)
         return net_need
 
     def calculate_urgency_score(
         self, internal_product: Dict, sales_period: str = "sales90d"
     ) -> str:
-        """Calculate simple urgency score based on stock vs sales for specified period"""
-        stock = internal_product.get("stock", 0)
+        """Calculate urgency score considering current stock AND pending deliveries"""
+        current_stock = internal_product.get("stock", 0)
+        qnt_pending_to_deliver = internal_product.get("qntPendingToDeliver", 0)
         sales = internal_product.get(sales_period, 0)
 
         if sales == 0:
@@ -302,12 +317,14 @@ class SimpleOpportunityEngine:
             sales_period, 90
         )
 
-        # Days of cover: how many days current stock will last
+        # Days of cover: how many days current stock + pending deliveries will last
         daily_sales = sales / period_days
         if daily_sales == 0:
             return "Low"
 
-        days_of_cover = stock / daily_sales
+        # Total available = current stock + what we're expecting
+        total_available = current_stock + qnt_pending_to_deliver
+        days_of_cover = total_available / daily_sales
 
         if days_of_cover < 14:
             return "High"
@@ -710,10 +727,7 @@ class SimpleOpportunityEngine:
     def _calculate_opportunity_with_priority_and_quantity(
         self, internal_product: Dict, supplier_product
     ) -> Optional[Dict]:
-        """
-        Calculate opportunity metrics with priority classification and supplier quantity
-        UPDATED: Store all sales periods for dynamic calculation
-        """
+        """Calculate opportunity metrics with priority classification and supplier quantity"""
 
         # Get supplier quote price
         if hasattr(supplier_product, "price"):
@@ -724,7 +738,7 @@ class SimpleOpportunityEngine:
         if not quote_price or quote_price <= 0:
             return None
 
-        # Get supplier quantity information
+        # NEW: Get supplier quantity information
         supplier_quantity = None
         if (
             hasattr(supplier_product, "quantity")
@@ -744,8 +758,8 @@ class SimpleOpportunityEngine:
         if not baseline_price:
             return None
 
-        # Calculate net need using default sales90d (will be recalculated dynamically in UI)
-        net_need = self.calculate_simple_net_need(internal_product, "sales90d")
+        # Calculate net need
+        net_need = self.calculate_simple_net_need(internal_product)
 
         # Calculate savings
         savings_per_unit = baseline_price - quote_price
@@ -754,21 +768,8 @@ class SimpleOpportunityEngine:
         if savings_per_unit <= 0:
             return None
 
-        # CORRECTED: Calculate total savings based on actual purchasable quantity
-        # If supplier quantity >= net need: use net need (we can buy all we need)
-        # If supplier quantity < net need: use supplier quantity (we can only buy what they have)
-        # If supplier quantity is unknown: assume unlimited and use net need
-
-        if supplier_quantity is not None and supplier_quantity >= 0:
-            # Supplier quantity is known
-            purchasable_quantity = (
-                min(supplier_quantity, net_need) if net_need > 0 else 0
-            )
-        else:
-            # Supplier quantity unknown - assume we can buy what we need
-            purchasable_quantity = net_need if net_need > 0 else 0
-
-        total_savings = savings_per_unit * purchasable_quantity
+        # Calculate total potential savings
+        total_savings = savings_per_unit * net_need if net_need > 0 else 0
 
         # Get supplier name
         supplier_name = "Unknown Supplier"
@@ -786,38 +787,24 @@ class SimpleOpportunityEngine:
             "prices_beaten": price_analysis["total_prices_beaten"],
         }
 
-        # Add quantity constraint information for transparency
-        quantity_analysis = {
-            "net_need": net_need,
-            "supplier_quantity": supplier_quantity,
-            "purchasable_quantity": purchasable_quantity,
-            "quantity_constrained": supplier_quantity is not None
-            and supplier_quantity < net_need,
-            "quantity_shortage": (
-                max(0, net_need - (supplier_quantity or 0))
-                if supplier_quantity is not None
-                else 0
-            ),
-        }
-
         return {
             "ean": internal_product["ean"],
             "product_name": internal_product.get("description", "Unknown Product"),
             "brand": internal_product.get("brand", ""),
             "current_stock": internal_product.get("stock", 0),
-            # UPDATED: Store ALL sales periods for dynamic calculation
+            "qntPendingToDeliver": internal_product.get(
+                "qntPendingToDeliver", 0
+            ),  # ← NEW LINE ADDED
             "sales90d": internal_product.get("sales90d", 0),
             "sales180d": internal_product.get("sales180d", 0),
             "sales365d": internal_product.get("sales365d", 0),
-            "net_need": net_need,  # Default calculation using sales90d
+            "net_need": net_need,
             "baseline_price": baseline_price,
             "quote_price": quote_price,
             "savings_per_unit": savings_per_unit,
-            "total_savings": total_savings,  # Now correctly calculated based on purchasable quantity
-            "purchasable_quantity": purchasable_quantity,  # NEW: Actual quantity we can buy
-            "quantity_analysis": quantity_analysis,  # NEW: Detailed quantity breakdown
+            "total_savings": total_savings,
             "supplier": supplier_name,
-            "supplier_quantity": supplier_quantity,
+            "supplier_quantity": supplier_quantity,  # NEW: Include supplier quantity
             "priority": priority_info["priority"],
             "priority_label": priority_info["priority_label"],
             "priority_description": priority_info["description"],
@@ -829,31 +816,22 @@ class SimpleOpportunityEngine:
                 internal_product.get("bestseller_rank")
             ),
             "best_historical_supplier": internal_product.get("best_supplier", ""),
-            "urgency_score": self.calculate_urgency_score(
-                internal_product, "sales90d"
-            ),  # Default to 90d
-            "days_of_cover": self._calculate_days_of_cover(
-                internal_product, "sales90d"
-            ),  # Default to 90d
+            "urgency_score": self.calculate_urgency_score(internal_product),
+            "days_of_cover": self._calculate_days_of_cover(internal_product),
         }
 
-    def _calculate_days_of_cover(
-        self, internal_product: Dict, sales_period: str = "sales90d"
-    ) -> float:
-        """Calculate how many days current stock will last based on specified sales period"""
+    def _calculate_days_of_cover(self, internal_product: Dict) -> float:
+        """Calculate how many days current stock + pending deliveries will last"""
         stock = internal_product.get("stock", 0)
-        sales = internal_product.get(sales_period, 0)
+        qnt_pending_to_deliver = internal_product.get("qntPendingToDeliver", 0)  # NEW
+        sales90d = internal_product.get("sales90d", 0)
 
-        if sales == 0:
+        if sales90d == 0:
             return 999  # Infinite cover if no sales
 
-        # Calculate days in period
-        period_days = {"sales90d": 90, "sales180d": 180, "sales365d": 365}.get(
-            sales_period, 90
-        )
-
-        daily_sales = sales / period_days
-        return stock / daily_sales if daily_sales > 0 else 999
+        daily_sales = sales90d / 90
+        total_available = stock + qnt_pending_to_deliver  # UPDATED
+        return total_available / daily_sales if daily_sales > 0 else 999
 
     def verify_savings_calculations(self) -> Dict:
         """Debug function to verify all savings calculations are correct"""
