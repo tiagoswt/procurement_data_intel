@@ -33,9 +33,11 @@ def get_safe_allocated_quantity(opp: Dict) -> int:
 
 def recalculate_net_need_for_period(opp: Dict, sales_period: str) -> int:
     """
-    Recalculate net need based on selected sales period
+    Recalculate net need based on selected sales period INCLUDING qntPendingToDeliver
+    UPDATED: New formula: sales - current_stock - qntPendingToDeliver
     """
     current_stock = opp.get("current_stock", 0)
+    qnt_pending_to_deliver = opp.get("qntPendingToDeliver", 0)
 
     # Get sales for the selected period
     if sales_period == "sales90d":
@@ -47,8 +49,8 @@ def recalculate_net_need_for_period(opp: Dict, sales_period: str) -> int:
     else:
         sales = opp.get("sales90d", 0)  # Default fallback
 
-    # Simple formula: if we sold X in period and have Y in stock, we need max(0, X-Y)
-    net_need = max(0, sales - current_stock)
+    # Updated formula: sales - current_stock - qntPendingToDeliver
+    net_need = max(0, sales - current_stock - qnt_pending_to_deliver)
     return net_need
 
 
@@ -87,7 +89,6 @@ def opportunities_tab(groq_api_key, api_key_valid=False):
     st.header("🎯 Procurement Opportunities with Smart Allocation")
     st.info(
         "💡 **Smart Multi-Supplier Allocation**: Automatically splits orders when suppliers have quantity constraints\n"
-        "🎯 **Quality Focus**: Only Priority 1 & 2 opportunities (higher impact standards)\n"
         "📊 **Sales Period Filter**: Dynamically calculate Net Need based on different sales periods"
     )
 
@@ -221,7 +222,7 @@ def show_internal_data_summary(engine):
         st.metric(
             "Stock Avg Price",
             with_stock_avg,
-            f"{with_stock_avg/len(internal_data)*100:.1f}%",
+            # f"{with_stock_avg/len(internal_data)*100:.1f}%",
         )
     with col2:
         st.metric("Sales 90d", f"{total_sales90d:,}")
@@ -275,11 +276,6 @@ def show_smart_opportunity_analysis(engine):
     """Show opportunity analysis interface with smart allocation and sales period filter"""
 
     st.subheader("💰 Smart Opportunity Analysis")
-    st.info(
-        "🤖 **Smart Multi-Supplier Allocation**: Automatically handles quantity constraints by splitting orders across suppliers\n"
-        "🎯 **Quality Standards**: Only showing Priority 1 & 2 opportunities (higher impact focus)\n"
-        "📊 **Dynamic Sales Periods**: Calculate Net Need based on your preferred sales period"
-    )
 
     # Get supplier data
     supplier_data = st.session_state.get("processed_data")
@@ -359,12 +355,6 @@ def show_smart_opportunity_analysis(engine):
     # Show allocation verification
     show_allocation_status(engine)
 
-    # Show savings calculation verification
-    show_savings_verification(engine)
-
-    # Show priority explanation
-    show_priority_and_allocation_explanation()
-
     # Show filtering and opportunities WITH SALES PERIOD FILTER
     filtered_opportunities = show_enhanced_allocation_filters(engine)
 
@@ -412,7 +402,7 @@ def show_enhanced_allocation_filters(engine):
             }.get(sales_period_filter, sales_period_filter)
 
             st.info(
-                f"📈 **Net Need will be calculated as**: Sales in last {period_name} - Current Stock"
+                f"📈 **Net Need will be calculated as**: Sales in last {period_name} - Current Stock - Pending Deliveries"
             )
 
         st.divider()
@@ -610,7 +600,7 @@ def show_enhanced_allocation_filters(engine):
             filter_description = f" (filtered by: {', '.join(filter_info_parts)})"
 
         st.info(
-            f"ℹ️ Showing {len(filtered)} opportunities (filtered from {len(opportunities)} total){filter_description} "
+            f"ℹ️ Showing {len(filtered)} opportunities (filtered from {len(opportunities)} total){filter_description} with Net Need calculated as {period_display} Sales - Current Stock - Pending Deliveries"
             f"with Net Need calculated using {period_display} sales data"
         )
     else:
@@ -620,10 +610,6 @@ def show_enhanced_allocation_filters(engine):
             "sales365d": "365 days",
         }.get(sales_period_filter, sales_period_filter)
 
-        st.info(
-            f"📊 Showing all {len(filtered)} opportunities with Net Need calculated using {period_display} sales data"
-        )
-
     # Show quality improvement message
     if len(opportunities) > 0:
         priority_1_count = sum(1 for opp in opportunities if opp.get("priority") == 1)
@@ -631,15 +617,14 @@ def show_enhanced_allocation_filters(engine):
 
         st.success(
             f"🎯 **Quality Focus**: {len(opportunities)} high-impact opportunities found "
-            f"({priority_1_count} Priority 1, {priority_2_count} Priority 2) - "
-            f"Lower-impact opportunities filtered out for strategic focus"
+            f"({priority_1_count} Priority 1, {priority_2_count} Priority 2) "
         )
 
     return filtered
 
 
 def show_enhanced_allocation_table(opportunities: List[Dict]):
-    """Show opportunities table with all sales columns and dynamic Net Need calculation"""
+    """Show opportunities table with all sales columns, qntPendingToDeliver, dynamic Net Need calculation AND Priority column"""
 
     if not opportunities:
         st.info("No opportunities match your filters.")
@@ -670,7 +655,7 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
     with col3:
         st.metric("📦 Single Orders", single_orders)
 
-    # Prepare data for display with all sales columns
+    # Prepare data for display with all sales columns, qntPendingToDeliver, AND Priority column
     table_data = []
     for i, opp in enumerate(opportunities):
         # Truncate product name if too long
@@ -698,62 +683,53 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
             if supplier_qty == 0:
                 qty_display = "0 ⚠️"
             elif supplier_qty < net_need:
-                qty_display = f"{int(supplier_qty)} ⚠️ (need {net_need})"
-            else:
+                qty_display = f"{int(supplier_qty)} ⚠️"
+            elif supplier_qty >= net_need and net_need > 0:
                 qty_display = f"{int(supplier_qty)} ✅"
+            else:
+                qty_display = str(int(supplier_qty))
 
-        # Show actual purchasable quantity vs net need
-        purchasable_display = f"{int(purchasable_qty)}"
-        if purchasable_qty < net_need:
-            purchasable_display = f"{int(purchasable_qty)} ⚠️"
-        else:
-            purchasable_display = f"{int(purchasable_qty)} ✅"
-
-        # Add allocation indicators for split orders
-        if opp.get("is_split_order", False):
-            allocated_qty = get_safe_allocated_quantity(opp)
-            qty_display = f"{qty_display} (using {allocated_qty})"
-            purchasable_display = f"{allocated_qty} (split)"
-
-        # Get price breakdown for detailed view
-        price_breakdown = opp.get("price_breakdown", {})
-
-        # Extract stock average price (NO ICONS)
-        stock_avg_price = price_breakdown.get("stock_avg_price")
-        stock_avg_display = "N/A"
-        if stock_avg_price is not None and stock_avg_price > 0:
+        # Enhanced stock average price formatting
+        stock_avg_price = opp.get("price_breakdown", {}).get("stock_avg_price")
+        if stock_avg_price and stock_avg_price > 0:
             stock_avg_display = f"€{stock_avg_price:.2f}"
+        else:
+            stock_avg_display = "N/A"
 
-        # Create price comparison tooltip
+        # Get detailed price breakdown for comparison
+        price_breakdown = opp.get("price_breakdown", {})
         price_details = []
-        if price_breakdown.get("best_buy_price"):
-            beat_symbol = "✅" if price_breakdown.get("beats_best_buy") else "❌"
-            price_details.append(
-                f"BestBuy: €{price_breakdown['best_buy_price']:.2f} {beat_symbol}"
-            )
-        if price_breakdown.get("supplier_price"):
-            beat_symbol = "✅" if price_breakdown.get("beats_supplier") else "❌"
-            price_details.append(
-                f"Supplier: €{price_breakdown['supplier_price']:.2f} {beat_symbol}"
-            )
-        if price_breakdown.get("stock_avg_price"):
-            beat_symbol = "✅" if price_breakdown.get("beats_stock_avg") else "❌"
-            price_details.append(
-                f"StockAvg: €{price_breakdown['stock_avg_price']:.2f} {beat_symbol}"
-            )
+        if price_breakdown.get("beats_best_buy"):
+            price_details.append("vs Best Buy ✅")
+        if price_breakdown.get("beats_supplier"):
+            price_details.append("vs Supplier ✅")
+        if price_breakdown.get("beats_stock_avg"):
+            price_details.append("vs Stock Avg ✅")
+
+        # FORMAT PRIORITY COLUMN - This was missing!
+        priority = opp.get("priority", 0)
+        priority_label = opp.get("priority_label", "")
+
+        if priority == 1:
+            priority_display = "🔥 P1"
+        elif priority == 2:
+            priority_display = "⭐ P2"
+        else:
+            priority_display = f"P{priority}" if priority else "N/A"
 
         table_data.append(
             {
-                "Row": i + 1,
-                "Priority": opp.get("priority_label", "N/A"),
+                # ADD PRIORITY AS FIRST COLUMN
+                "Priority": priority_display,
                 "EAN": opp.get("ean", ""),
                 "Product": product_name,
                 "Brand": opp.get("brand", "N/A"),
                 "Current Stock": opp.get("current_stock", 0),
+                "Pending Delivery": opp.get("qntPendingToDeliver", 0),
                 "Sales 90d": opp.get("sales90d", 0),
                 "Sales 180d": opp.get("sales180d", 0),
                 "Sales 365d": opp.get("sales365d", 0),
-                "Net Need": net_need,  # This is the dynamically calculated net need
+                "Net Need": net_need,
                 "Stock Avg Price": stock_avg_display,
                 "Baseline Price": f"€{opp.get('baseline_price', 0):.2f}",
                 "Quote Price": f"€{opp.get('quote_price', 0):.2f}",
@@ -786,17 +762,36 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
         height=600,  # Set a fixed height to allow scrolling through all rows
     )
 
-    st.info(
-        f"✅ **All {len(opportunities)} opportunities displayed** - Use scroll bar to navigate through all rows"
-    )
-
-    # Add explanation for columns
+    # Add explanation for columns INCLUDING Priority column
     with st.expander("📖 Column Guide"):
-        st.write("**Sales Columns:**")
+        st.write("**Priority Column:**")
+        st.write(
+            "• **🔥 P1 (Priority 1)**: Quote beats ALL 3 internal prices (bestbuy, supplier, stock avg)"
+        )
+        st.write(
+            "• **⭐ P2 (Priority 2)**: Quote beats operational prices (supplier + stock avg) but not bestbuy"
+        )
+        st.write(
+            "• **Highest impact opportunities** are Priority 1, followed by Priority 2"
+        )
+        st.write("")
+        st.write("**Stock & Delivery Columns:**")
+        st.write("• **Current Stock**: Current inventory level")
+        st.write("• **Pending Delivery**: Quantity waiting from another supply source")
         st.write("• **Sales 90d/180d/365d**: Historical sales for different periods")
-        st.write("• **Net Need**: Calculated as Selected Sales Period - Current Stock")
+        st.write(
+            "• **Net Need**: Calculated as Selected Sales Period - Current Stock - Pending Delivery"
+        )
         st.write(
             "• **Current calculation**: Based on the sales period filter you selected"
+        )
+        st.write("")
+        st.write("**Days Cover column shows:**")
+        st.write(
+            "• **Number of days**: How long Current Stock + Pending Delivery will last based on sales velocity"
+        )
+        st.write(
+            "• **Considers both current stock AND pending deliveries** in the calculation"
         )
         st.write("")
         st.write("**Stock Average Price column shows:**")
@@ -810,39 +805,17 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
         st.write(
             "**Note**: All sales columns are shown but only the selected sales period is used for Net Need calculation"
         )
+        st.write("")
+        st.write("**🆕 Updated Formula:**")
+        st.write("• **Net Need = Sales Period - Current Stock - Pending Delivery**")
+        st.write("• **Days Cover = (Current Stock + Pending Delivery) ÷ Daily Sales**")
+        st.write(
+            "• **This ensures accurate calculations considering expected deliveries**"
+        )
 
     # Show split order details if any
     if split_orders > 0:
         show_split_order_analysis(opportunities)
-
-    # Show allocation summary
-    with st.expander("📊 Allocation Summary"):
-        # Group by EAN to show split order details
-        ean_groups = {}
-        for opp in opportunities:
-            ean = opp.get("ean", "")
-            if ean not in ean_groups:
-                ean_groups[ean] = []
-            ean_groups[ean].append(opp)
-
-        split_ean_count = sum(1 for group in ean_groups.values() if len(group) > 1)
-        single_ean_count = len(ean_groups) - split_ean_count
-
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Unique Products", len(ean_groups))
-        with col2:
-            st.metric("Products with Split Orders", split_ean_count)
-        with col3:
-            st.metric("Products with Single Supplier", single_ean_count)
-        with col4:
-            total_savings = sum(opp.get("total_savings", 0) for opp in opportunities)
-            st.metric("Total Optimized Savings", f"€{total_savings:.2f}")
-
-
-# [Keep all other existing functions unchanged - they don't need modification for the sales period filter]
-# The rest of the functions (show_enhanced_allocation_summary, show_allocation_status, etc.)
-# remain exactly the same as they were in the original file.
 
 
 def show_enhanced_allocation_summary(engine):
@@ -946,44 +919,6 @@ def show_enhanced_allocation_summary(engine):
             }
         )
 
-    # Main metrics row
-    col1, col2, col3, col4, col5 = st.columns(5)
-
-    with col1:
-        st.metric(
-            "Total Opportunities",
-            summary["total_opportunities"],
-            help="Number of products with cost-saving opportunities (Priority 1 & 2 only)",
-        )
-
-    with col2:
-        st.metric(
-            "Potential Savings",
-            f"€{summary['total_potential_savings']:.2f}",
-            help="Total potential savings across all opportunities",
-        )
-
-    with col3:
-        st.metric(
-            "Cost Savings %",
-            f"{summary.get('cost_savings_percentage', 0):.1f}%",
-            help="Percentage saved vs baseline prices for all opportunities",
-        )
-
-    with col4:
-        st.metric(
-            "High Urgency",
-            summary["high_urgency_count"],
-            help="Products with less than 14 days of stock cover",
-        )
-
-    with col5:
-        st.metric(
-            "Bestseller Opportunities",
-            summary["bestseller_opportunities"],
-            help="Opportunities for bestselling products (rank 1-2)",
-        )
-
     # Enhanced cost breakdown with stock average comparison
     if summary.get("total_baseline_cost", 0) > 0:
         st.subheader("💰 Total Cost Comparison")
@@ -1069,28 +1004,28 @@ def show_enhanced_allocation_summary(engine):
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        priority_1_pct = (
-            summary["priority_1_count"] / summary["total_opportunities"] * 100
-            if summary["total_opportunities"] > 0
-            else 0
-        )
+        # priority_1_pct = (
+        #    summary["priority_1_count"] / summary["total_opportunities"] * 100
+        #    if summary["total_opportunities"] > 0
+        #    else 0
+        # )
         st.metric(
             "🔥 Priority 1",
             summary.get("priority_1_count", 0),
-            f"{priority_1_pct:.1f}%",
+            # f"{priority_1_pct:.1f}%",
             help="Better than ALL internal prices (bestbuy, supplier, stock avg)",
         )
 
     with col2:
-        priority_2_pct = (
-            summary["priority_2_count"] / summary["total_opportunities"] * 100
-            if summary["total_opportunities"] > 0
-            else 0
-        )
+        # priority_2_pct = (
+        #    summary["priority_2_count"] / summary["total_opportunities"] * 100
+        #    if summary["total_opportunities"] > 0
+        #    else 0
+        # )
         st.metric(
             "⭐ Priority 2",
             summary.get("priority_2_count", 0),
-            f"{priority_2_pct:.1f}%",
+            # f"{priority_2_pct:.1f}%",
             help="Better than operational prices (supplier & stock avg) but not bestbuy",
         )
 
@@ -1099,15 +1034,15 @@ def show_enhanced_allocation_summary(engine):
         total_qualified = summary.get("priority_1_count", 0) + summary.get(
             "priority_2_count", 0
         )
-        qualification_rate = (
-            (total_qualified / summary["total_opportunities"] * 100)
-            if summary["total_opportunities"] > 0
-            else 0
-        )
+        # qualification_rate = (
+        #    (total_qualified / summary["total_opportunities"] * 100)
+        #    if summary["total_opportunities"] > 0
+        #    else 0
+        # )
         st.metric(
             "✅ Total Qualified",
             total_qualified,
-            f"{qualification_rate:.1f}%",
+            # f"{qualification_rate:.1f}%",
             help="Total opportunities meeting Priority 1 or 2 criteria (100% with quality focus)",
         )
 
@@ -1116,28 +1051,28 @@ def show_enhanced_allocation_summary(engine):
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        split_pct = (
-            summary.get("split_orders_count", 0) / summary["total_opportunities"] * 100
-            if summary["total_opportunities"] > 0
-            else 0
-        )
+        # split_pct = (
+        #    summary.get("split_orders_count", 0) / summary["total_opportunities"] * 100
+        #    if summary["total_opportunities"] > 0
+        #    else 0
+        # )
         st.metric(
             "🔄 Split Orders",
             summary.get("split_orders_count", 0),
-            f"{split_pct:.1f}%",
+            # f"{split_pct:.1f}%",
             help="Orders split across multiple suppliers due to quantity constraints",
         )
 
     with col2:
-        single_pct = (
-            summary.get("single_orders_count", 0) / summary["total_opportunities"] * 100
-            if summary["total_opportunities"] > 0
-            else 0
-        )
+        # single_pct = (
+        #    summary.get("single_orders_count", 0) / summary["total_opportunities"] * 100
+        #    if summary["total_opportunities"] > 0
+        #    else 0
+        # )
         st.metric(
             "📦 Single Supplier",
             summary.get("single_orders_count", 0),
-            f"{single_pct:.1f}%",
+            # f"{single_pct:.1f}%",
             help="Orders fulfilled by single supplier (sufficient quantity)",
         )
 
@@ -1170,153 +1105,6 @@ def show_enhanced_allocation_summary(engine):
                 st.metric("📊 Avg Suppliers/Split", "0.0")
         else:
             st.metric("📊 Avg Suppliers/Split", "0.0")
-
-
-def show_savings_verification(engine):
-    """Show savings calculation verification"""
-
-    with st.expander("🧮 Verify Savings Calculations"):
-        st.write("**Debug tool to verify all savings calculations are correct**")
-
-        if st.button("🔍 Verify All Calculations", key="verify_calculations_btn"):
-            try:
-                verification_results = engine.verify_savings_calculations()
-
-                if "error" in verification_results:
-                    st.error(f"❌ {verification_results['error']}")
-                    return
-
-                # Show overall results
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric(
-                        "Total Opportunities",
-                        verification_results["total_opportunities"],
-                    )
-                with col2:
-                    st.metric(
-                        "Correct Calculations",
-                        verification_results["correct_calculations"],
-                    )
-                with col3:
-                    accuracy = verification_results["accuracy_rate"]
-                    st.metric("Accuracy Rate", f"{accuracy:.1f}%")
-
-                if verification_results["incorrect_calculations"] > 0:
-                    st.error(
-                        f"❌ Found {verification_results['incorrect_calculations']} calculation errors!"
-                    )
-
-                    # Show issues found
-                    st.write("**🚨 Issues Found:**")
-                    for i, issue in enumerate(
-                        verification_results["issues_found"][:10]
-                    ):  # Show first 10 issues
-                        with st.expander(
-                            f"Issue #{i+1}: EAN {issue['ean']} - {issue['supplier']}"
-                        ):
-                            col1, col2 = st.columns(2)
-
-                            with col1:
-                                st.write("**Input Values:**")
-                                st.write(f"• Net Need: {issue['net_need']}")
-                                st.write(
-                                    f"• Supplier Qty: {issue['supplier_quantity']}"
-                                )
-                                st.write(
-                                    f"• Savings/Unit: €{issue['savings_per_unit']:.2f}"
-                                )
-
-                            with col2:
-                                st.write("**Calculation Results:**")
-                                st.write(
-                                    f"• Recorded Purchasable: {issue['recorded_purchasable']}"
-                                )
-                                st.write(
-                                    f"• Expected Purchasable: {issue['expected_purchasable']}"
-                                )
-                                st.write(
-                                    f"• Recorded Total Savings: €{issue['recorded_total_savings']:.2f}"
-                                )
-                                st.write(
-                                    f"• Expected Total Savings: €{issue['expected_total_savings']:.2f}"
-                                )
-
-                            if issue["purchasable_error"]:
-                                st.error("❌ Purchasable quantity calculation error")
-                            if issue["savings_error"]:
-                                st.error("❌ Total savings calculation error")
-
-                    if len(verification_results["issues_found"]) > 10:
-                        st.error(
-                            f"• ... and {len(verification_results['issues_found']) - 10} more issues"
-                        )
-                else:
-                    st.success("✅ All savings calculations are correct!")
-
-                # Show sample calculations
-                if verification_results["calculation_details"]:
-                    st.write("**📊 Sample Calculation Details:**")
-
-                    sample_data = []
-                    for detail in verification_results["calculation_details"]:
-                        sample_data.append(
-                            {
-                                "EAN": detail["ean"],
-                                "Net Need": detail["net_need"],
-                                "Supplier Qty": (
-                                    detail["supplier_quantity"]
-                                    if detail["supplier_quantity"] is not None
-                                    else "Unknown"
-                                ),
-                                "Purchasable": f"{detail['purchasable_qty']} (exp: {detail['expected_purchasable']})",
-                                "Savings/Unit": f"€{detail['savings_per_unit']:.2f}",
-                                "Total Savings": f"€{detail['total_savings']:.2f} (exp: €{detail['expected_savings']:.2f})",
-                                "Status": "✅" if detail["is_correct"] else "❌",
-                            }
-                        )
-
-                    st.dataframe(pd.DataFrame(sample_data), use_container_width=True)
-
-            except AttributeError:
-                st.warning(
-                    "⚠️ Verification method not available in current engine version"
-                )
-                st.info("💡 The savings calculations should use this logic:")
-                st.write("• **If supplier_qty ≥ net_need**: purchasable = net_need")
-                st.write("• **If supplier_qty < net_need**: purchasable = supplier_qty")
-                st.write("• **If supplier_qty unknown**: purchasable = net_need")
-                st.write("• **Total Savings = savings_per_unit × purchasable**")
-
-            except Exception as e:
-                st.error(f"❌ Error during verification: {str(e)}")
-
-        st.write("**Expected Calculation Logic:**")
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            st.write("**📦 Purchasable Quantity**")
-            st.write("• If supplier_qty ≥ net_need:")
-            st.write("  → purchasable = net_need")
-            st.write("• If supplier_qty < net_need:")
-            st.write("  → purchasable = supplier_qty")
-            st.write("• If supplier_qty unknown:")
-            st.write("  → purchasable = net_need")
-
-        with col2:
-            st.write("**💰 Total Savings**")
-            st.write("• Formula:")
-            st.write("  → total_savings = savings_per_unit × purchasable_qty")
-            st.write("• Never use net_need directly")
-            st.write("• Always use purchasable quantity")
-
-        with col3:
-            st.write("**🔍 Common Issues**")
-            st.write("• Using net_need instead of purchasable")
-            st.write("• Not handling unknown quantities")
-            st.write("• Incorrect min() calculation")
-            st.write("• Split order recalculation errors")
 
 
 def show_allocation_status(engine):
@@ -1374,80 +1162,6 @@ def show_allocation_status(engine):
 
     except Exception as e:
         st.warning(f"Could not verify allocation: {str(e)}")
-
-
-def show_priority_and_allocation_explanation():
-    """Show explanation of priority system and smart allocation - UPDATED: Only Priority 1 and 2"""
-
-    with st.expander("📖 Priority System & Smart Allocation Guide"):
-        # Priority explanation
-        st.write("### 🎯 Priority System - High Standards Only")
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.write("**🔥 Priority 1 - Maximum Impact**")
-            st.write("• Quote beats ALL 3 internal prices")
-            st.write("• Beats: bestbuy, supplier, AND stock average")
-            st.write("• Baseline: Best of all 3 internal prices")
-            st.write("• These are your most valuable opportunities")
-
-            st.write("")
-            st.write("**⭐ Priority 2 - Operational Improvement**")
-            st.write("• Quote beats supplier AND stock average prices")
-            st.write("• Quote does NOT beat bestbuy price")
-            st.write("• Baseline: Best of (supplier, stock average)")
-            st.write("• Improves your day-to-day operational costs")
-
-            st.write("")
-            st.write("**🚫 Priority 3 - ELIMINATED**")
-            st.write("• Previously: Quote beats only supplier OR stock avg")
-            st.write("• Now filtered out to focus on higher-impact opportunities")
-            st.write("• Only accepting opportunities with clear operational benefits")
-
-        with col2:
-            st.write("### 🤖 Smart Multi-Supplier Allocation")
-
-            st.write("**How it works:**")
-            st.write(
-                "1. **Single Supplier Sufficient**: Use best price supplier if they have enough quantity"
-            )
-            st.write(
-                "2. **Quantity Constraints**: Automatically split orders across suppliers"
-            )
-            st.write(
-                "3. **Optimal Allocation**: Always start with cheapest supplier, fill remainder with next best"
-            )
-            st.write("4. **Cost Transparency**: Shows blended pricing and split costs")
-
-            st.write("")
-            st.write("**💰 Savings Calculation Logic:**")
-            st.write("• **Total Savings = Savings/Unit × Purchasable Quantity**")
-            st.write("• **Purchasable Quantity = min(Supplier Quantity, Net Need)**")
-            st.write("• **If supplier qty ≥ net need**: Use net need")
-            st.write("• **If supplier qty < net need**: Use supplier qty")
-            st.write("• **If supplier qty unknown**: Assume unlimited, use net need")
-
-            st.write("")
-            st.write("**📊 Sales Period Filter:**")
-            st.write("• **90 days**: Short-term needs (3 months)")
-            st.write("• **180 days**: Medium-term needs (6 months)")
-            st.write("• **365 days**: Long-term needs (1 year)")
-            st.write("• **Net Need = Selected Sales Period - Current Stock**")
-
-            st.write("")
-            st.write("**🎯 Quality Focus:**")
-            st.write("• **Higher Standards**: Only Priority 1 & 2 opportunities")
-            st.write("• **Better ROI**: Focus on meaningful cost improvements")
-            st.write("• **Cleaner Results**: Fewer low-impact opportunities")
-            st.write("• **Strategic Focus**: Operational and maximum impact only")
-
-            st.write("")
-            st.write("**Example Split Order:**")
-            st.write("• Need: 100 units")
-            st.write("• Supplier A: 75 units @ €10.00 (best price)")
-            st.write("• Supplier B: 25 units @ €10.50 (2nd best)")
-            st.write("• **Result**: Optimal cost with full fulfillment")
 
 
 def show_split_order_analysis(opportunities: List[Dict]):
@@ -1796,9 +1510,6 @@ def show_allocation_export_options(opportunities: List[Dict]):
         return
 
     st.subheader("💾 Export Smart Allocation Results")
-    st.caption(
-        "📤 **Enhanced Export**: Includes allocation details, stock average pricing, quality focus (Priority 1 & 2 only), and sales period data"
-    )
 
     col1, col2 = st.columns(2)
 
@@ -2017,10 +1728,6 @@ def show_allocation_export_options(opportunities: List[Dict]):
                                     "Total_Cost": f"{opp.get('quote_price', 0) * allocated_qty:.2f}".replace(
                                         ".", ","
                                     ),
-                                    "Sales_Period_Used": opp.get(
-                                        "calculated_with_period", "sales90d"
-                                    ),
-                                    "Net_Need_Calculated": opp.get("net_need", 0),
                                 }
                             )
 
@@ -2090,7 +1797,7 @@ def show_allocation_export_options(opportunities: List[Dict]):
                                 "Supplier": supplier_name,
                                 "Products": len(supplier_opportunities),
                                 "Total Units": supplier_quantity,
-                                "Columns": "EAN, Product_Name, Brand, Quantity, Quote_Price, Total_Cost, Sales_Period_Used, Net_Need_Calculated",
+                                "Columns": "EAN, Product_Name, Brand, Quantity, Quote_Price, Total_Cost",
                             }
                         )
 
@@ -2127,13 +1834,3 @@ def show_allocation_export_options(opportunities: List[Dict]):
         "sales180d": "180 days",
         "sales365d": "365 days",
     }.get(sales_period_used, sales_period_used)
-
-    st.info(
-        f"📊 **Enhanced Export**: {len(opportunities)} high-quality opportunities "
-        f"({priority_1_count} Priority 1, {priority_2_count} Priority 2) • "
-        f"{split_count} split orders, {single_count} single orders • "
-        f"Stock average pricing for {stock_avg_available} products • "
-        f"**{supplier_count} suppliers** with allocated products • "
-        f"**Sales Period**: {period_display} data used for Net Need calculation • "
-        f"**Quality Focus**: Priority 3 eliminated for strategic focus"
-    )
