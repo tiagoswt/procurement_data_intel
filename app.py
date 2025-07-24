@@ -403,14 +403,6 @@ def manual_file_processing_tab(groq_api_key):
     """
 
     st.header("📤 Manual File Processing")
-    st.info(
-        "🔧 **Supplier Catalog Upload**: Upload and process your supplier catalogs manually for full control"
-    )
-
-    # Add helpful note about order files
-    st.info(
-        "💡 **Note**: Order files are now uploaded in the '🛒 Order Optimization' tab for better workflow organization"
-    )
 
     # Show supplier catalog processing directly (no sub-tabs needed)
     manual_supplier_processing(groq_api_key)
@@ -1226,10 +1218,6 @@ def order_optimization_tab():
         st.info(
             "🧠 **Automatic Mode**: Smart multi-supplier allocation with folder-based order loading"
         )
-    else:
-        st.info(
-            "🧠 **Manual Mode**: Smart multi-supplier allocation with manual file upload"
-        )
 
     # Check prerequisites
     if not st.session_state.get("processed_data"):
@@ -1976,7 +1964,10 @@ def show_enhanced_supplier_breakdown(optimizer, summary):
 
     st.subheader("🏢 Supplier Order Breakdown")
 
-    if not hasattr(optimizer, "optimization_results") or not optimizer.optimization_results:
+    if (
+        not hasattr(optimizer, "optimization_results")
+        or not optimizer.optimization_results
+    ):
         st.warning("⚠️ No optimization results available")
         return
 
@@ -2058,7 +2049,7 @@ def show_enhanced_supplier_breakdown(optimizer, summary):
         return
 
     supplier_df = pd.DataFrame(supplier_data)
-    
+
     # FIXED: Add error handling for Order Value column
     try:
         # Check if Order Value column exists
@@ -2075,7 +2066,7 @@ def show_enhanced_supplier_breakdown(optimizer, summary):
                         sort_values.append(0)  # Default value for invalid entries
                 except (ValueError, AttributeError):
                     sort_values.append(0)  # Default value for conversion errors
-            
+
             supplier_df["_sort_value"] = sort_values
             supplier_df = supplier_df.sort_values("_sort_value", ascending=False).drop(
                 "_sort_value", axis=1
@@ -2084,7 +2075,7 @@ def show_enhanced_supplier_breakdown(optimizer, summary):
             st.error("❌ Error: Order Value column missing from supplier data")
             st.write("Available columns:", list(supplier_df.columns))
             return
-            
+
     except Exception as e:
         st.error(f"❌ Error processing supplier data: {str(e)}")
         st.write("Debug info:")
@@ -2623,4 +2614,3 @@ def generate_unfulfilled_summary_report(unfulfilled_df, optimizer):
 # Run the app
 if __name__ == "__main__":
     main()
-
