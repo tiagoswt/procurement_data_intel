@@ -9,6 +9,7 @@ from collections import defaultdict
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime
 from models import ProductData
+from utils import pad_ean_code
 
 logger = logging.getLogger(__name__)
 
@@ -233,7 +234,7 @@ class EnhancedOrderOptimizer:
                     stock_avg_price = f"{stock_avg_price:.2f}".replace(".", ",")
 
                 csv_row = [
-                    item["ean_code"],
+                    pad_ean_code(item["ean_code"]),
                     item["product_name"].replace(";", ","),
                     str(item["quantity"]),
                     f"{item['unit_price']:.2f}".replace(".", ","),
@@ -911,3 +912,404 @@ class EnhancedOrderOptimizer:
                         return ean_code
 
         return None
+
+    def show_enhanced_order_optimization_table(optimizer):
+        """
+        Display the enhanced order optimization results table
+        UPDATED: Added Price Difference % column
+        """
+        if not optimizer.optimization_results:
+            st.info("No optimization results available. Run optimization first.")
+            return
+
+        # Get enhanced results
+        enhanced_results = get_enhanced_optimization_results(optimizer)
+
+        if not enhanced_results:
+            st.warning("No enhanced results to display.")
+            return
+
+        st.subheader("📊 Enhanced Order Analysis Table")
+
+        # Calculate summary metrics
+        total_items = len(enhanced_results)
+        total_cost = sum(item["total_cost"] for item in enhanced_results)
+        total_savings = sum(item["total_savings"] for item in enhanced_results)
+        split_orders = sum(
+            1 for item in enhanced_results if "Split" in item["allocation_type"]
+        )
+        single_orders = total_items - split_orders
+
+        # Display summary metrics
+        col1, col2, col3, col4, col5 = st.columns(5)
+        with col1:
+            st.metric("Total Items", total_items)
+        with col2:
+            st.metric("Total Cost", f"€{total_cost:.2f}")
+        with col3:
+            st.metric("Total Savings", f"€{total_savings:.2f}")
+        with col4:
+            st.metric("🔄 Split Orders", split_orders)
+        with col5:
+            st.metric("📦 Single Orders", single_orders)
+
+        # Prepare data for display
+        table_data = []
+        for i, item in enumerate(enhanced_results):
+            # Format prices safely
+            def format_price(price):
+                if price is not None and price > 0:
+                    return f"€{price:.2f}"
+                return "N/A"
+
+            # Format savings with color indicators
+            savings_display = (
+                f"€{item['savings_per_unit']:.2f}"
+                if item["savings_per_unit"] > 0
+                else "€0.00"
+            )
+            if item["savings_per_unit"] > 0:
+                savings_display += " ✅"
+
+            # Truncate product name if too long
+            product_name = item["product_name"]
+            if len(product_name) > 35:
+                product_name = product_name[:35] + "..."
+
+            # Format supplier quantity with indicators
+            supplier_qty_display = "Unknown"
+            if item["supplier_quantity"] is not None:
+                qty = int(item["supplier_quantity"])
+                if qty >= item["allocated_quantity"]:
+                    supplier_qty_display = f"{qty} ✅"
+                else:
+                    supplier_qty_display = f"{qty} ⚠️"
+
+            table_data.append(
+                {
+                    "Row": i + 1,
+                    "EAN": item["ean"],
+                    "Product": product_name,
+                    "Brand": item["brand"],
+                    "Qty Ordered": int(item["quantity_ordered"]),
+                    "Best Price": format_price(item["best_price"]),
+                    "Stock Avg Price": format_price(item["stock_avg_price"]),
+                    "Quote Price": format_price(item["quote_price"]),
+                    "Price Diff %": item["price_diff_display"],  # NEW COLUMN
+                    "Total Cost": format_price(item["total_cost"]),
+                    "Savings/Unit": savings_display,
+                    "Total Savings": f"€{item['total_savings']:.2f}",
+                    "Allocated Qty": int(item["allocated_quantity"]),
+                    "Supplier Qty": supplier_qty_display,
+                    "Allocation": item["allocation_type"],
+                    "Supplier": item["supplier"],
+                    "Ref Price Source": item["reference_price_source"],
+                }
+            )
+
+        # Display the table
+        df = pd.DataFrame(table_data)
+        st.dataframe(df, use_container_width=True, height=600)
+
+        # Show additional analysis
+        with st.expander("📈 Pricing Analysis"):
+            # Group by pricing data availability
+            with_stock_avg = sum(
+                1 for item in enhanced_results if item["stock_avg_price"]
+            )
+            with_best_price = sum(1 for item in enhanced_results if item["best_price"])
+            with_savings = sum(
+                1 for item in enhanced_results if item["total_savings"] > 0
+            )
+            with_price_diff = sum(
+                1
+                for item in enhanced_results
+                if item["price_diff_percentage"] is not None
+            )
+
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric(
+                    "Items with Stock Avg Price",
+                    with_stock_avg,
+                    f"{with_stock_avg/total_items*100:.1f}%",
+                )
+            with col2:
+                st.metric(
+                    "Items with Best Price Data",
+                    with_best_price,
+                    f"{with_best_price/total_items*100:.1f}%",
+                )
+            with col3:
+                st.metric(
+                    "Items with Savings",
+                    with_savings,
+                    f"{with_savings/total_items*100:.1f}%",
+                )
+            with col4:
+                st.metric(
+                    "Items with Price Diff %",
+                    with_price_diff,
+                    f"{with_price_diff/total_items*100:.1f}%",
+                )
+
+            # Show price difference analysis
+            if with_price_diff > 0:
+                st.subheader("📊 Price Difference Analysis")
+
+                # Calculate average price difference
+                price_diffs = [
+                    item["price_diff_percentage"]
+                    for item in enhanced_results
+                    if item["price_diff_percentage"] is not None
+                ]
+                if price_diffs:
+                    avg_price_diff = sum(price_diffs) / len(price_diffs)
+                    positive_diffs = [d for d in price_diffs if d > 0]  # Savings
+                    negative_diffs = [d for d in price_diffs if d < 0]  # More expensive
+
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric(
+                            "Average Price Difference",
+                            f"{avg_price_diff:.1f}%",
+                            help="Average percentage difference between stock average and quote prices",
+                        )
+                    with col2:
+                        st.metric(
+                            "Items with Savings",
+                            len(positive_diffs),
+                            (
+                                f"{len(positive_diffs)/len(price_diffs)*100:.1f}%"
+                                if price_diffs
+                                else "0%"
+                            ),
+                        )
+                    with col3:
+                        st.metric(
+                            "Items More Expensive",
+                            len(negative_diffs),
+                            (
+                                f"{len(negative_diffs)/len(price_diffs)*100:.1f}%"
+                                if price_diffs
+                                else "0%"
+                            ),
+                        )
+
+            # Show price source breakdown
+            st.write("**Reference Price Sources:**")
+            source_counts = {}
+            for item in enhanced_results:
+                source = item["reference_price_source"]
+                source_counts[source] = source_counts.get(source, 0) + 1
+
+            for source, count in source_counts.items():
+                percentage = count / total_items * 100
+                st.write(f"• {source}: {count} items ({percentage:.1f}%)")
+
+        # Show enhanced table guide
+        show_enhanced_table_guide_with_price_diff()
+
+        # Export functionality (existing code continues...)
+        with st.expander("💾 Export Enhanced Order Data"):
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button("📄 Download Enhanced Order CSV"):
+                    # Prepare clean export data
+                    export_data = []
+                    for item in enhanced_results:
+                        export_row = {
+                            "EAN": item["ean"],
+                            "Product_Name": item["product_name"],
+                            "Brand": item["brand"],
+                            "Quantity_Ordered": item["quantity_ordered"],
+                            "Best_Price": (
+                                item["best_price"] if item["best_price"] else ""
+                            ),
+                            "Stock_Avg_Price": (
+                                item["stock_avg_price"]
+                                if item["stock_avg_price"]
+                                else ""
+                            ),
+                            "Quote_Price": item["quote_price"],
+                            "Price_Diff_Percentage": (
+                                item["price_diff_percentage"]
+                                if item["price_diff_percentage"] is not None
+                                else ""
+                            ),
+                            "Total_Cost": item["total_cost"],
+                            "Savings_Per_Unit": item["savings_per_unit"],
+                            "Total_Savings": item["total_savings"],
+                            "Allocated_Quantity": item["allocated_quantity"],
+                            "Supplier_Quantity": (
+                                item["supplier_quantity"]
+                                if item["supplier_quantity"] is not None
+                                else ""
+                            ),
+                            "Allocation_Type": item["allocation_type"]
+                            .replace("🔄 ", "")
+                            .replace("📦 ", ""),
+                            "Supplier": item["supplier"],
+                            "Reference_Price_Source": item["reference_price_source"],
+                            "Original_Reference": item["original_reference"],
+                            "Export_Date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        }
+                        export_data.append(export_row)
+
+                    # Create CSV
+                    export_df = pd.DataFrame(export_data)
+                    csv_content = export_df.to_csv(index=False, sep=";", decimal=",")
+                    filename = f"enhanced_order_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+
+                    st.download_button(
+                        label="💾 Download Enhanced CSV",
+                        data=csv_content,
+                        file_name=filename,
+                        mime="text/csv",
+                        help="Downloads enhanced order analysis with pricing data and price difference percentages",
+                    )
+
+            with col2:
+                if st.button("📊 Download Summary Report"):
+                    # Create summary report
+                    report_lines = [
+                        "ENHANCED ORDER OPTIMIZATION REPORT",
+                        "=" * 50,
+                        f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                        "",
+                        "SUMMARY:",
+                        f"- Total items: {total_items}",
+                        f"- Total cost: €{total_cost:.2f}",
+                        f"- Total savings: €{total_savings:.2f}",
+                        (
+                            f"- Average savings per item: €{total_savings/total_items:.2f}"
+                            if total_items > 0
+                            else "- Average savings per item: €0.00"
+                        ),
+                        f"- Split orders: {split_orders}",
+                        f"- Single orders: {single_orders}",
+                        "",
+                        "PRICING DATA AVAILABILITY:",
+                        f"- Items with stock average price: {with_stock_avg} ({with_stock_avg/total_items*100:.1f}%)",
+                        f"- Items with best price data: {with_best_price} ({with_best_price/total_items*100:.1f}%)",
+                        f"- Items with calculated savings: {with_savings} ({with_savings/total_items*100:.1f}%)",
+                        f"- Items with price difference %: {with_price_diff} ({with_price_diff/total_items*100:.1f}%)",
+                        "",
+                    ]
+
+                    # Add price difference analysis to report
+                    if with_price_diff > 0:
+                        price_diffs = [
+                            item["price_diff_percentage"]
+                            for item in enhanced_results
+                            if item["price_diff_percentage"] is not None
+                        ]
+                        if price_diffs:
+                            avg_price_diff = sum(price_diffs) / len(price_diffs)
+                            positive_diffs = [d for d in price_diffs if d > 0]
+                            negative_diffs = [d for d in price_diffs if d < 0]
+
+                            report_lines.extend(
+                                [
+                                    "PRICE DIFFERENCE ANALYSIS:",
+                                    f"- Average price difference: {avg_price_diff:.1f}%",
+                                    f"- Items with savings: {len(positive_diffs)} ({len(positive_diffs)/len(price_diffs)*100:.1f}%)",
+                                    f"- Items more expensive: {len(negative_diffs)} ({len(negative_diffs)/len(price_diffs)*100:.1f}%)",
+                                    "",
+                                ]
+                            )
+
+                    # Add supplier breakdown
+                    report_lines.append("SUPPLIER BREAKDOWN:")
+                    supplier_stats = {}
+                    for item in enhanced_results:
+                        supplier = item["supplier"]
+                        if supplier not in supplier_stats:
+                            supplier_stats[supplier] = {
+                                "items": 0,
+                                "total_cost": 0,
+                                "total_savings": 0,
+                            }
+                        supplier_stats[supplier]["items"] += 1
+                        supplier_stats[supplier]["total_cost"] += item["total_cost"]
+                        supplier_stats[supplier]["total_savings"] += item[
+                            "total_savings"
+                        ]
+
+                    for supplier, stats in supplier_stats.items():
+                        report_lines.extend(
+                            [
+                                f"- {supplier}:",
+                                f"  Items: {stats['items']}",
+                                f"  Cost: €{stats['total_cost']:.2f}",
+                                f"  Savings: €{stats['total_savings']:.2f}",
+                                "",
+                            ]
+                        )
+
+                    report_content = "\n".join(report_lines)
+
+                    st.download_button(
+                        label="📋 Download Report",
+                        data=report_content,
+                        file_name=f"order_optimization_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                        mime="text/plain",
+                        help="Downloads comprehensive order optimization report with price difference analysis",
+                    )
+
+            st.info(
+                f"📊 **Enhanced Analysis**: {total_items} optimized items • {len(set(item['supplier'] for item in enhanced_results))} suppliers • €{total_savings:.2f} total savings potential • {with_price_diff} items with price difference calculations"
+            )
+
+    def show_enhanced_table_guide_with_price_diff():
+        """Show explanation of the enhanced table columns including the new Price Diff % column"""
+        with st.expander("📖 Enhanced Table Column Guide"):
+            st.write("**Enhanced Order Analysis Columns:**")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.write("**Product Information:**")
+                st.write("• **EAN**: Product barcode")
+                st.write("• **Product**: Product name/description")
+                st.write("• **Brand**: Product brand (from internal data)")
+                st.write("")
+                st.write("**Quantities:**")
+                st.write("• **Qty Ordered**: Original quantity in your order")
+                st.write("• **Allocated Qty**: Quantity allocated to this supplier")
+                st.write("• **Supplier Qty**: Available quantity from supplier")
+                st.write("  - ✅ = Sufficient quantity")
+                st.write("  - ⚠️ = Limited quantity")
+                st.write("")
+                st.write("**Allocation:**")
+                st.write("• **📦 Single**: Fulfilled by one supplier")
+                st.write("• **🔄 Split**: Split across multiple suppliers")
+
+            with col2:
+                st.write("**Pricing Analysis:**")
+                st.write("• **Best Price**: Lowest price across all suppliers")
+                st.write("• **Stock Avg Price**: Your average stock price")
+                st.write("• **Quote Price**: Selected supplier's price")
+                st.write(
+                    "• **Price Diff %**: Percentage difference between Stock Avg and Quote prices"
+                )
+                st.write("  - `-15.2%` = Quote is 15.2% cheaper than stock average")
+                st.write(
+                    "  - `+8.1%` = Quote is 8.1% more expensive than stock average"
+                )
+                st.write("  - `Formula: ((Stock Avg - Quote) / Stock Avg) × 100`")
+                st.write("• **Total Cost**: Quote Price × Allocated Quantity")
+                st.write("")
+                st.write("**Savings Calculation:**")
+                st.write("• **Savings/Unit**: Reference Price - Quote Price")
+                st.write("• **Total Savings**: Savings/Unit × Allocated Quantity")
+                st.write("• **Ref Price Source**: Which price used for savings:")
+                st.write("  - Stock Avg (preferred)")
+                st.write("  - Best Price (fallback)")
+                st.write("  - None (no reference available)")
+                st.write("")
+                st.write("**Indicators:**")
+                st.write("• ✅ = Positive/Good status")
+                st.write("• ⚠️ = Warning/Limited")
+                st.write("• N/A = Data not available")
