@@ -8,6 +8,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from typing import List, Dict, Any
+from utils import pad_ean_code
 
 
 def get_safe_allocated_quantity(opp: Dict) -> int:
@@ -624,7 +625,7 @@ def show_enhanced_allocation_filters(engine):
 
 
 def show_enhanced_allocation_table(opportunities: List[Dict]):
-    """Show opportunities table with all sales columns, qntPendingToDeliver, dynamic Net Need calculation AND Priority column"""
+    """Show opportunities table with all sales columns, qntPendingToDeliver, dynamic Net Need calculation AND Priority column AND Price Difference %"""
 
     if not opportunities:
         st.info("No opportunities match your filters.")
@@ -655,7 +656,7 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
     with col3:
         st.metric("📦 Single Orders", single_orders)
 
-    # Prepare data for display with all sales columns, qntPendingToDeliver, AND Priority column
+    # Prepare data for display with all sales columns, qntPendingToDeliver, Priority column AND Price Difference %
     table_data = []
     for i, opp in enumerate(opportunities):
         # Truncate product name if too long
@@ -706,7 +707,7 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
         if price_breakdown.get("beats_stock_avg"):
             price_details.append("vs Stock Avg ✅")
 
-        # FORMAT PRIORITY COLUMN - This was missing!
+        # FORMAT PRIORITY COLUMN
         priority = opp.get("priority", 0)
         priority_label = opp.get("priority_label", "")
 
@@ -717,11 +718,33 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
         else:
             priority_display = f"P{priority}" if priority else "N/A"
 
+        # NEW: Calculate Price Difference Percentage
+        baseline_price = opp.get("baseline_price", 0)
+        quote_price = opp.get("quote_price", 0)
+
+        if baseline_price and baseline_price > 0 and quote_price > 0:
+            price_diff_percentage = (
+                (baseline_price - quote_price) / baseline_price
+            ) * 100
+            price_diff_display = f"{price_diff_percentage:.1f}%"
+            if price_diff_percentage > 0:
+                price_diff_display = (
+                    f"-{price_diff_display}"  # Downward arrow for savings
+                )
+            elif price_diff_percentage < 0:
+                price_diff_display = (
+                    f"+{abs(price_diff_percentage):.1f}%"  # Upward arrow for increase
+                )
+            else:
+                price_diff_display = "0.0%"
+        else:
+            price_diff_display = "N/A"
+
         table_data.append(
             {
                 # ADD PRIORITY AS FIRST COLUMN
                 "Priority": priority_display,
-                "EAN": opp.get("ean", ""),
+                "EAN": pad_ean_code(opp.get("ean", "")),
                 "Product": product_name,
                 "Brand": opp.get("brand", "N/A"),
                 "Current Stock": opp.get("current_stock", 0),
@@ -733,6 +756,7 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
                 "Stock Avg Price": stock_avg_display,
                 "Baseline Price": f"€{opp.get('baseline_price', 0):.2f}",
                 "Quote Price": f"€{opp.get('quote_price', 0):.2f}",
+                "Price Diff %": price_diff_display,  # NEW COLUMN
                 "Total Cost": f"€{opp.get('quote_price', 0) * get_safe_allocated_quantity(opp):.2f}",
                 "Savings/Unit": f"€{opp.get('savings_per_unit', 0):.2f}",
                 "Total Savings": f"€{opp.get('total_savings', 0):.2f}",
@@ -762,7 +786,7 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
         height=600,  # Set a fixed height to allow scrolling through all rows
     )
 
-    # Add explanation for columns INCLUDING Priority column
+    # Add explanation for columns INCLUDING Priority column AND Price Difference %
     with st.expander("📖 Column Guide"):
         st.write("**Priority Column:**")
         st.write(
@@ -773,6 +797,19 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
         )
         st.write(
             "• **Highest impact opportunities** are Priority 1, followed by Priority 2"
+        )
+        st.write("")
+        st.write("**NEW: Price Difference % Column:**")
+        st.write(
+            "• **↓X.X%**: Shows savings percentage (baseline price vs quote price)"
+        )
+        st.write(
+            "• **Formula**: ((Baseline Price - Quote Price) / Baseline Price) × 100"
+        )
+        st.write("• **↓15.2%**: Quote is 15.2% cheaper than baseline price")
+        st.write("• **↑5.1%**: Quote is 5.1% more expensive than baseline price")
+        st.write(
+            "• **Baseline Price**: Best internal price used for comparison (varies by priority)"
         )
         st.write("")
         st.write("**Stock & Delivery Columns:**")
@@ -809,6 +846,9 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
         st.write("**🆕 Updated Formula:**")
         st.write("• **Net Need = Sales Period - Current Stock - Pending Delivery**")
         st.write("• **Days Cover = (Current Stock + Pending Delivery) ÷ Daily Sales**")
+        st.write(
+            "• **Price Diff % = ((Baseline Price - Quote Price) / Baseline Price) × 100**"
+        )
         st.write(
             "• **This ensures accurate calculations considering expected deliveries**"
         )
@@ -1554,7 +1594,7 @@ def show_allocation_export_options(opportunities: List[Dict]):
                     # Basic identification
                     "Priority": ensure_numeric(opp.get("priority", 0)),
                     "Priority_Label": clean_text(opp.get("priority_label", "")),
-                    "EAN": clean_text(opp.get("ean", "")),
+                    "EAN": pad_ean_code(opp.get("ean", "")),
                     "Product_Name": clean_text(opp.get("product_name", "")),
                     "Brand": clean_text(opp.get("brand", "")),
                     # Quantities (as integers)
@@ -1718,7 +1758,7 @@ def show_allocation_export_options(opportunities: List[Dict]):
 
                             supplier_csv_data.append(
                                 {
-                                    "EAN": opp.get("ean", ""),
+                                    "EAN": pad_ean_code(opp.get("ean", "")),
                                     "Product_Name": opp.get("product_name", ""),
                                     "Brand": opp.get("brand", ""),
                                     "Quantity": allocated_qty,
