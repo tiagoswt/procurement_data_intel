@@ -10,6 +10,7 @@ from typing import List, Dict, Optional
 from datetime import datetime
 from models import ProductData
 import streamlit as st
+from utils import pad_ean_code
 
 logger = logging.getLogger(__name__)
 
@@ -1085,7 +1086,7 @@ class OrderOptimizer:
             for item in items:
                 df_data.append(
                     {
-                        "EAN Code": item["ean_code"],
+                        "EAN Code": pad_ean_code(item["ean_code"]),
                         "Product Name": item["product_name"],
                         "Quantity": item["quantity"],
                         "Unit Price": f"€{item['unit_price']:.2f}",
@@ -1174,3 +1175,4 @@ class OrderOptimizer:
     ) -> List[Dict]:
         """Wrapper method that uses smart price-based allocation"""
         return self._smart_price_based_allocation_for_ean(ean, ean_opportunities)
+
