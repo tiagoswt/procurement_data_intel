@@ -1227,3 +1227,4 @@ ENHANCED_CONFIG = {
         "sales365d",
     ],  # NEW: All supported sales periods
 }
+
