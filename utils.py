@@ -66,7 +66,10 @@ def export_to_csv(
         filename = f"{supplier_clean}_{timestamp}.csv"
 
     # Convert products to DataFrame
-    products_data = [product.to_dict() for product in products]
+    for product_dict in products_data:
+        if product_dict.get("ean_code"):
+            product_dict["ean_code"] = pad_ean_code(product_dict["ean_code"])
+
     df = pd.DataFrame(products_data)
 
     # Reorder columns for better readability
@@ -297,3 +300,34 @@ def merge_processing_results(results: List[ProcessingResult]) -> ProcessingResul
         files_processed=total_files,
         total_products=len(merged_products),
     )
+
+
+def pad_ean_code(ean):
+    """
+    Pad EAN code with leading zeros to make it exactly 13 digits
+
+    Args:
+        ean: EAN code as string, int, float, or None
+
+    Returns:
+        str: 13-digit EAN code with leading zeros, or empty string if invalid
+    """
+    if not ean or pd.isna(ean):
+        return ""
+
+    # Convert to string and clean
+    ean_str = str(ean).strip()
+
+    # Handle float format (remove .0)
+    if ean_str.endswith(".0"):
+        ean_str = ean_str[:-2]
+
+    # Remove any non-digit characters
+    ean_digits = "".join(c for c in ean_str if c.isdigit())
+
+    # Skip if no digits or too long
+    if not ean_digits or len(ean_digits) > 13:
+        return ean_digits  # Return as-is if too long
+
+    # Pad with leading zeros to make 13 digits
+    return ean_digits.zfill(13)
