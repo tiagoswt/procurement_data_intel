@@ -443,3 +443,4 @@ class DataNormalizer:
             stats["ean_length_distribution"] = length_dist
 
         return stats
+
