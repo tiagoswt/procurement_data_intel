@@ -180,4 +180,3 @@ class FileProcessor:
             "type": uploaded_file.type,
             "extension": Path(uploaded_file.name).suffix.lower(),
         }
-
