@@ -7,6 +7,7 @@ UPDATED: Hide automatic file processing, use manual upload for all files
 import streamlit as st
 import pandas as pd
 import json
+import csv
 import time
 import os
 from datetime import datetime
@@ -125,6 +126,43 @@ def main():
                 auth.logout()
                 st.rerun()
 
+        # Reset all data button
+        st.divider()
+        st.caption("⚠️ Data Management")
+        if st.button("🔄 Reset All Data", key="reset_all_data_btn", type="secondary"):
+            # Clear all session state data
+            keys_to_reset = [
+                "processed_data",
+                "processing_results",
+                "price_analysis",
+                "buying_lists",
+                "manual_order_files",
+                "opportunity_engine",
+                "file_manager"
+            ]
+            for key in keys_to_reset:
+                if key in st.session_state:
+                    if key == "order_optimizer":
+                        st.session_state.order_optimizer = OrderOptimizer()
+                    elif key == "enhanced_order_optimizer":
+                        from enhanced_order_optimizer import EnhancedOrderOptimizer
+                        st.session_state.enhanced_order_optimizer = EnhancedOrderOptimizer()
+                    else:
+                        del st.session_state[key]
+
+            # Reinitialize essential session state
+            st.session_state.processed_data = []
+            st.session_state.processing_results = []
+            st.session_state.price_analysis = None
+            st.session_state.order_optimizer = OrderOptimizer()
+            st.session_state.buying_lists = []
+            from enhanced_order_optimizer import EnhancedOrderOptimizer
+            st.session_state.enhanced_order_optimizer = EnhancedOrderOptimizer()
+
+            st.success("✅ All data has been reset!")
+            time.sleep(1)
+            st.rerun()
+
         # PHASE 3: Debug mode (minimal, only in development)
         if DEBUG_SHOW_AUTO_FEATURES:
             st.warning("🚧 **DEBUG MODE**")
@@ -191,9 +229,9 @@ def main():
         with tab4:
             order_optimization_tab()
     else:
-        # PHASE 3: Manual mode - clean 3-tab structure
-        tab1, tab2, tab3 = st.tabs(
-            ["📤 File Processing", "🎯 Opportunities", "🛒 Order Optimization"]
+        # PHASE 3: Manual mode - clean 4-tab structure
+        tab1, tab2, tab3, tab4 = st.tabs(
+            ["📤 File Processing", "🎯 Opportunities", "🛒 Order Optimization", "🔄 CSV Delimiter Converter"]
         )
 
         with tab1:
@@ -202,6 +240,8 @@ def main():
             opportunities_tab(groq_api_key, api_key_valid=bool(groq_api_key))
         with tab3:
             order_optimization_tab()
+        with tab4:
+            csv_delimiter_converter_tab()
 
 
 def create_order_file_uploader(context="default"):
@@ -1206,6 +1246,95 @@ def show_enhanced_order_optimization_table(optimizer):
         st.info(
             f"📊 **Enhanced Analysis**: {total_items} optimized items • {len(set(item['supplier'] for item in enhanced_results))} suppliers • €{total_savings:.2f} total savings potential"
         )
+
+
+def csv_delimiter_converter_tab():
+    """CSV Delimiter Converter - Convert comma to semicolon delimiter and format EAN codes"""
+
+    st.header("🔄 CSV Delimiter Converter")
+    st.write("Convert CSV delimiter from ',' to ';' and automatically format EAN codes to 13 digits")
+
+    # File uploader
+    uploaded_file = st.file_uploader("Upload CSV File", type=['csv'], key="csv_delimiter_upload")
+
+    if uploaded_file is not None:
+        st.success(f"Selected: {uploaded_file.name}")
+
+        # Convert button
+        if st.button("Convert & Download", type="primary"):
+            try:
+                # Read the CSV file
+                try:
+                    content = uploaded_file.read().decode('utf-8')
+                except UnicodeDecodeError:
+                    uploaded_file.seek(0)
+                    content = uploaded_file.read().decode('latin1')
+
+                # Parse CSV
+                from io import StringIO
+                input_data = StringIO(content)
+                rows = list(csv.reader(input_data, delimiter=','))
+
+                if not rows:
+                    st.error("The CSV file is empty")
+                    return
+
+                # Find EAN column
+                header_row = rows[0]
+                ean_column_index = None
+                for i, column_name in enumerate(header_row):
+                    if column_name.upper() in ['EAN', 'EAN13', 'BARCODE', 'CODE_BARRES']:
+                        ean_column_index = i
+                        break
+
+                # Process rows
+                eans_formatted = 0
+                output_data = StringIO()
+                csv_writer = csv.writer(output_data, delimiter=';')
+
+                for row_index, row in enumerate(rows):
+                    # Format EAN if found
+                    if ean_column_index is not None and row_index > 0 and len(row) > ean_column_index:
+                        ean_value = row[ean_column_index]
+                        if ean_value and str(ean_value).strip():
+                            ean_str = str(ean_value).strip()
+                            if ean_str.replace('.', '').replace(',', '').isdigit():
+                                ean_digits = ''.join(filter(str.isdigit, ean_str))
+                                if len(ean_digits) <= 13:
+                                    formatted_ean = ean_digits.zfill(13)
+                                    if ean_value != formatted_ean:
+                                        eans_formatted += 1
+                                    row[ean_column_index] = formatted_ean
+
+                    csv_writer.writerow(row)
+
+                # Get output
+                output_content = output_data.getvalue()
+
+                # Show success message
+                success_message = f"✅ File converted successfully!\n\n"
+                success_message += f"- {len(rows)} rows processed\n"
+                if ean_column_index is not None:
+                    success_message += f"- {eans_formatted} EAN codes formatted to 13 digits\n"
+                else:
+                    success_message += "- No EAN column detected\n"
+
+                st.success(success_message)
+
+                # Download button
+                output_filename = f"{os.path.splitext(uploaded_file.name)[0]}_semicolon.csv"
+                st.download_button(
+                    label="📥 Download Converted CSV",
+                    data=output_content,
+                    file_name=output_filename,
+                    mime="text/csv",
+                    type="primary"
+                )
+
+            except Exception as e:
+                st.error(f"An error occurred: {str(e)}")
+    else:
+        st.info("👆 Please upload a CSV file to convert")
 
 
 def order_optimization_tab():
