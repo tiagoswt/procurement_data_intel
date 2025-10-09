@@ -1312,14 +1312,7 @@ def csv_delimiter_converter_tab():
                 output_content = output_data.getvalue()
 
                 # Show success message
-                success_message = f"✅ File converted successfully!\n\n"
-                success_message += f"- {len(rows)} rows processed\n"
-                if ean_column_index is not None:
-                    success_message += f"- {eans_formatted} EAN codes formatted to 13 digits\n"
-                else:
-                    success_message += "- No EAN column detected\n"
-
-                st.success(success_message)
+                st.success(f"✅ File converted successfully! {len(rows)} rows processed")
 
                 # Download button
                 output_filename = f"{os.path.splitext(uploaded_file.name)[0]}_semicolon.csv"
@@ -2743,3 +2736,4 @@ def generate_unfulfilled_summary_report(unfulfilled_df, optimizer):
 # Run the app
 if __name__ == "__main__":
     main()
+
