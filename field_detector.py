@@ -567,3 +567,4 @@ class AIFieldDetector:
             suggestions[field] = list(dict.fromkeys(suggestions[field]))[:3]
 
         return suggestions
+
