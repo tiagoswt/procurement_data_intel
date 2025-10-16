@@ -331,3 +331,5 @@ def pad_ean_code(ean):
 
     # Pad with leading zeros to make 13 digits
     return ean_digits.zfill(13)
+
+
