@@ -105,4 +105,3 @@ class FieldMapping:
             "quantity": self.quantity,
             "price": self.price,
         }
-
