@@ -1176,3 +1176,4 @@ class OrderOptimizer:
         """Wrapper method that uses smart price-based allocation"""
         return self._smart_price_based_allocation_for_ean(ean, ean_opportunities)
 
+
