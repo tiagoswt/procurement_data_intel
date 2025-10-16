@@ -1313,3 +1313,4 @@ class EnhancedOrderOptimizer:
                 st.write("• ✅ = Positive/Good status")
                 st.write("• ⚠️ = Warning/Limited")
                 st.write("• N/A = Data not available")
+
