@@ -55,6 +55,61 @@ def recalculate_net_need_for_period(opp: Dict, sales_period: str) -> int:
     return net_need
 
 
+def calculate_net_need_for_custom_days(opp: Dict, custom_days: int) -> int:
+    """
+    Calculate net need for a custom number of days by extrapolating from available sales data.
+    Uses the closest available sales period for most accurate estimation.
+
+    Args:
+        opp: Opportunity dictionary with sales data
+        custom_days: Number of days to calculate net need for (1-365)
+
+    Returns:
+        Estimated net need for the custom period
+    """
+    if not custom_days or custom_days <= 0:
+        return 0
+
+    current_stock = opp.get("current_stock", 0)
+    qnt_pending_to_deliver = opp.get("qntPendingToDeliver", 0)
+
+    # Get available sales data
+    sales90d = opp.get("sales90d", 0)
+    sales180d = opp.get("sales180d", 0)
+    sales365d = opp.get("sales365d", 0)
+
+    # Choose the best sales period to extrapolate from based on custom_days
+    # Use the closest period that is >= custom_days when possible
+    estimated_sales = 0
+
+    if custom_days <= 90 and sales90d > 0:
+        # Use 90-day data for periods up to 90 days
+        estimated_sales = (sales90d / 90) * custom_days
+    elif custom_days <= 180 and sales180d > 0:
+        # Use 180-day data for periods between 91-180 days
+        estimated_sales = (sales180d / 180) * custom_days
+    elif sales365d > 0:
+        # Use 365-day data for longer periods or when others unavailable
+        estimated_sales = (sales365d / 365) * custom_days
+    elif sales180d > 0:
+        # Fallback to 180 if 365 not available
+        estimated_sales = (sales180d / 180) * custom_days
+    elif sales90d > 0:
+        # Last resort: extrapolate from 90-day data
+        estimated_sales = (sales90d / 90) * custom_days
+    else:
+        # No sales data available
+        estimated_sales = 0
+
+    # Round to nearest integer
+    estimated_sales = int(round(estimated_sales))
+
+    # Calculate net need: estimated_sales - current_stock - pending_delivery
+    net_need = max(0, estimated_sales - current_stock - qnt_pending_to_deliver)
+
+    return net_need
+
+
 def recalculate_opportunity_with_new_period(opp: Dict, sales_period: str) -> Dict:
     """
     Recalculate opportunity metrics based on new sales period
@@ -357,16 +412,16 @@ def show_smart_opportunity_analysis(engine):
     show_allocation_status(engine)
 
     # Show filtering and opportunities WITH SALES PERIOD FILTER
-    filtered_opportunities = show_enhanced_allocation_filters(engine)
+    filtered_opportunities, custom_days = show_enhanced_allocation_filters(engine)
 
     # Show opportunities table with allocation details
-    show_enhanced_allocation_table(filtered_opportunities)
+    show_enhanced_allocation_table(filtered_opportunities, custom_days)
 
     # Show supplier analysis with allocation insights
     show_enhanced_allocation_supplier_analysis(engine)
 
     # Export options with allocation data
-    show_allocation_export_options(filtered_opportunities)
+    show_allocation_export_options(filtered_opportunities, custom_days)
 
 
 def show_enhanced_allocation_filters(engine):
@@ -378,7 +433,7 @@ def show_enhanced_allocation_filters(engine):
         # First row - Sales Period Filter (prominent position)
         st.subheader("📊 Sales Period for Net Need Calculation")
 
-        col1, col2 = st.columns([1, 3])
+        col1, col2, col3 = st.columns([1, 1, 2])
 
         with col1:
             sales_period_filter = st.selectbox(
@@ -395,6 +450,19 @@ def show_enhanced_allocation_filters(engine):
             )
 
         with col2:
+            # NEW: Custom days input for additional column
+            custom_days_input = st.number_input(
+                "Custom Days (for extra column)",
+                min_value=1,
+                max_value=365,
+                value=None,
+                step=1,
+                help="Enter custom number of days to see an additional Net Need calculation column in the table",
+                key="custom_days_filter",
+                placeholder="e.g., 45, 120, 200",
+            )
+
+        with col3:
             # Show what this affects
             period_name = {
                 "sales90d": "90 days",
@@ -402,9 +470,11 @@ def show_enhanced_allocation_filters(engine):
                 "sales365d": "365 days",
             }.get(sales_period_filter, sales_period_filter)
 
-            st.info(
-                f"📈 **Net Need will be calculated as**: Sales in last {period_name} - Current Stock - Pending Deliveries"
-            )
+            info_text = f"📈 **Net Need calculated as**: Sales in last {period_name} - Current Stock - Pending Deliveries"
+            if custom_days_input:
+                info_text += f"\n\n🎯 **Custom column**: Will show Net Need for {custom_days_input} days"
+
+            st.info(info_text)
 
         st.divider()
 
@@ -621,11 +691,11 @@ def show_enhanced_allocation_filters(engine):
             f"({priority_1_count} Priority 1, {priority_2_count} Priority 2) "
         )
 
-    return filtered
+    return filtered, custom_days_input
 
 
-def show_enhanced_allocation_table(opportunities: List[Dict]):
-    """Show opportunities table with all sales columns, qntPendingToDeliver, dynamic Net Need calculation AND Priority column AND Price Difference %"""
+def show_enhanced_allocation_table(opportunities: List[Dict], custom_days: int = None):
+    """Show opportunities table with all sales columns, qntPendingToDeliver, dynamic Net Need calculation AND Priority column AND Price Difference % AND Custom Days column"""
 
     if not opportunities:
         st.info("No opportunities match your filters.")
@@ -740,6 +810,13 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
         else:
             price_diff_display = "N/A"
 
+        # Calculate custom days net need if custom_days is provided
+        if custom_days and custom_days > 0:
+            custom_net_need = calculate_net_need_for_custom_days(opp, custom_days)
+            custom_days_display = custom_net_need
+        else:
+            custom_days_display = "N/A"
+
         table_data.append(
             {
                 # ADD PRIORITY AS FIRST COLUMN
@@ -752,6 +829,7 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
                 "Sales 90d": opp.get("sales90d", 0),
                 "Sales 180d": opp.get("sales180d", 0),
                 "Sales 365d": opp.get("sales365d", 0),
+                "Custom Days Net Need": custom_days_display,
                 "Net Need": net_need,
                 "Stock Avg Price": stock_avg_display,
                 "Baseline Price": f"€{opp.get('baseline_price', 0):.2f}",
@@ -816,6 +894,21 @@ def show_enhanced_allocation_table(opportunities: List[Dict]):
         st.write("• **Current Stock**: Current inventory level")
         st.write("• **Pending Delivery**: Quantity waiting from another supply source")
         st.write("• **Sales 90d/180d/365d**: Historical sales for different periods")
+        st.write(
+            "• **Custom Days Net Need**: Optional column showing Net Need for custom time period"
+        )
+        st.write(
+            "  - Shows the calculated net need as a simple number (e.g., 14, 0, 150)"
+        )
+        st.write(
+            "  - Extrapolates from closest available sales data (90d/180d/365d)"
+        )
+        st.write(
+            "  - Shows 'N/A' if no custom days value entered in filter"
+        )
+        st.write(
+            "  - Column header shows which custom period is being used"
+        )
         st.write(
             "• **Net Need**: Calculated as Selected Sales Period - Current Stock - Pending Delivery"
         )
@@ -1543,7 +1636,7 @@ def show_enhanced_allocation_supplier_analysis(engine):
                     )
 
 
-def show_allocation_export_options(opportunities: List[Dict]):
+def show_allocation_export_options(opportunities: List[Dict], custom_days: int = None):
     """Show export options with allocation data and stock average prices"""
 
     if not opportunities:
@@ -1589,6 +1682,11 @@ def show_allocation_export_options(opportunities: List[Dict]):
             # Prepare cleaned data for export
             export_data = []
             for opp in opportunities:
+                # Calculate custom days net need if custom_days is provided
+                custom_net_need_value = ""
+                if custom_days and custom_days > 0:
+                    custom_net_need_value = int(calculate_net_need_for_custom_days(opp, custom_days))
+
                 # Clean and format all data
                 export_row = {
                     # Basic identification
@@ -1602,6 +1700,8 @@ def show_allocation_export_options(opportunities: List[Dict]):
                     "Sales_90d": int(ensure_numeric(opp.get("sales90d", 0))),
                     "Sales_180d": int(ensure_numeric(opp.get("sales180d", 0))),
                     "Sales_365d": int(ensure_numeric(opp.get("sales365d", 0))),
+                    "Custom_Days_Period": custom_days if custom_days else "",
+                    "Custom_Days_Net_Need": custom_net_need_value,
                     "Net_Need": int(ensure_numeric(opp.get("net_need", 0))),
                     "Calculated_With_Period": clean_text(
                         opp.get("calculated_with_period", "sales90d")
@@ -1697,6 +1797,8 @@ def show_allocation_export_options(opportunities: List[Dict]):
                 "Sales_90d",
                 "Sales_180d",
                 "Sales_365d",
+                "Custom_Days_Period",
+                "Custom_Days_Net_Need",
                 "Net_Need",
                 "Allocated_Quantity",
                 "Split_Order_Rank",
