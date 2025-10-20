@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(streamlit run:*)",
+      "Bash(python:*)",
+      "Read(//c/Users/tiago/Projetos/Python/SweetCare/AI/csv_delimiter/**)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(where python)",
+      "Bash(if exist venvpyvenv.cfg type venvpyvenv.cfg)",
+      "Bash(Remove-Item -Recurse -Force venv)",
+      "Bash(rm:*)",
+      "Bash(mv:*)",
+      "Bash(venv\\Scripts\\pip install:*)",
+      "Bash(./venv/Scripts/pip install:*)",
+      "Bash(./venv/Scripts/pip:*)",
+      "Bash(pip install:*)",
+      "Bash(venvScriptspython.exe -m pip:*)",
+      "Bash(./venv/Scripts/python.exe -m pip:*)",
+      "Bash(git init)",
+      "Bash(git config user.name \"tiagoswt\")",
+      "Bash(git config user.email \"tiago.gomes@sweetcare.pt\")",
+      "Bash(git remote add origin https://github.com/tiagoswt/procurement_data_intel.git)",
+      "Bash(git add .)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

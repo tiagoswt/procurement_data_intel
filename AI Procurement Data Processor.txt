@@ -1,0 +1,153 @@
+AI Procurement Data Processor - Current Architecture
+🏗️ Overall System Structure
+ai_procurement/
+├── 📁 app/                          # Application entry point
+│   └── main.py                      # Main Streamlit application
+├── 📁 config/                       # Configuration management
+│   ├── __init__.py                  # Package initialization & app config
+│   ├── ui_config.py                 # UI settings & constants 
+│   └── api_config.py                # API key management & session state
+├── 📁 tabs/                         # UI tab implementations
+│   ├── file_processing.py           # File upload & processing UI
+│   ├── field_mapping.py             # Field mapping review UI
+│   ├── results_display.py           # Results visualization UI
+│   ├── price_analysis.py            # Price analysis UI
+│   └── order_optimization.py        # Order optimization UI
+├── 📁 components/                   # Reusable UI components
+│   ├── file_uploader.py             # File upload widgets
+│   ├── metrics_display.py           # Metrics & KPIs display
+│   └── data_tables.py               # Data table components
+├── 📁 analysis/                     # Core business logic
+│   ├── price_analysis_core.py       # Price analysis algorithms
+│   ├── order_optimization_core.py   # Order optimization logic
+│   └── order_analysis.py            # Order analysis utilities
+├── 📁 detection/                    # Data field detection system
+│   ├── field_detector.py            # Base field detection
+│   ├── ai_detector.py               # AI-powered detection
+│   ├── pattern_detector.py          # Pattern-based detection
+│   └── csv_parser.py                # CSV parsing utilities
+├── 📁 shared/                       # Shared utilities
+│   ├── logging_utils.py             # Logging configuration
+│   ├── progress_tracking.py         # Progress indicators
+│   ├── export_utils.py              # Data export functionality
+│   └── error_handling.py            # Error management
+├── 📁 models/                       # Data models & structures
+│   ├── __init__.py                  # Model definitions
+│   └── (ProductData, FieldMapping, etc.)
+├── 📄 processor.py                  # Main processing engine
+├── 📄 file_processor.py             # File processing logic
+├── 📄 price_analyzer.py             # Price analysis engine
+├── 📄 order_optimizer.py            # Order optimization engine
+├── 📄 utils.py                      # General utilities
+├── 📄 constants.py                  # Application constants
+├── 📄 requirements.txt              # Dependencies
+└── 📄 .env                          # Environment variables
+🔧 Core Components & Responsibilities
+1. Application Layer
+
+main.py: Entry point, tab orchestration, Streamlit configuration
+config/: Centralized configuration management
+
+ui_config.py: UI constants, messages, styling
+api_config.py: API key management, session state setup
+
+
+
+2. User Interface Layer
+
+tabs/: Individual Streamlit tab implementations
+
+File Processing, Field Mapping, Results, Price Analysis, Order Optimization
+
+
+components/: Reusable UI widgets
+
+File uploaders, metrics displays, data tables
+
+
+
+3. Business Logic Layer
+
+processor.py: Main data processing orchestrator
+analysis/: Core business algorithms (separate from UI)
+
+Price comparison logic
+Order optimization algorithms
+
+
+detection/: Field detection system
+
+AI-powered field detection (Groq API)
+Pattern-based fallback detection
+
+
+
+4. Data Layer
+
+models/: Data structures and schemas
+
+ProductData, FieldMapping, ProcessingResult
+
+
+file_processor.py: File reading and parsing
+shared/export_utils.py: Data export functionality
+
+5. Infrastructure Layer
+
+shared/: Cross-cutting concerns
+
+Logging, progress tracking, error handling
+
+
+utils.py: General utility functions
+constants.py: Application-wide constants
+
+🔄 Data Flow Architecture
+mermaidgraph TD
+    A[User Uploads Files] --> B[File Processor]
+    B --> C[Field Detection]
+    C --> D[AI Detector]
+    C --> E[Pattern Detector]
+    D --> F[Main Processor]
+    E --> F
+    F --> G[Data Validation & Cleaning]
+    G --> H[Product Extraction]
+    H --> I[Session State Storage]
+    I --> J[Price Analysis]
+    I --> K[Order Optimization]
+    J --> L[Results Display]
+    K --> L
+    L --> M[Export Options]
+🎯 Key Features & Capabilities
+Universal EAN Detection
+
+Detects: EAN-13, EAN-8, UPC-A, Gencod, custom barcodes
+AI-enhanced detection with pattern fallback
+Multiple encoding support (CP1252, UTF-8, Latin-1)
+
+AI-Powered Field Detection
+
+Groq API integration for intelligent field mapping
+Fallback to pattern-based detection
+Multi-language support (EN, FR, PT, ES)
+
+Price Analysis Engine
+
+Multi-supplier price comparison
+Savings opportunity identification
+Competitive analysis and rankings
+
+Order Optimization System
+
+Buying list processing
+Supplier distribution optimization
+Cost minimization algorithms
+
+
+🔧 Architecture Strengths
+✅ Modular Design: Clear separation of concerns
+✅ Scalable Structure: Easy to extend and maintain
+✅ UI/Logic Separation: Business logic separated from presentation
+✅ Configuration Management: Centralized settings
+✅ Error Handling: Comprehensive error management
+✅ Progress Tracking: User-friendly progress indicators
