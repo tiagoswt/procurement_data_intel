@@ -325,7 +325,7 @@ def show_internal_data_summary(engine):
                 }
             )
 
-        st.dataframe(pd.DataFrame(sample_data), use_container_width=True)
+        st.dataframe(pd.DataFrame(sample_data), width='stretch')
 
 
 def show_smart_opportunity_analysis(engine):
@@ -860,7 +860,7 @@ def show_enhanced_allocation_table(opportunities: List[Dict], custom_days: int =
     # Display the full table without any row limits
     st.dataframe(
         df,
-        use_container_width=True,
+        width='stretch',
         height=600,  # Set a fixed height to allow scrolling through all rows
     )
 
@@ -1405,7 +1405,7 @@ def show_split_order_analysis(opportunities: List[Dict]):
             )
 
         if split_details:
-            st.dataframe(pd.DataFrame(split_details), use_container_width=True)
+            st.dataframe(pd.DataFrame(split_details), width='stretch')
 
         # Cost analysis summary
         total_cost_difference = sum(
@@ -1570,7 +1570,7 @@ def show_enhanced_allocation_supplier_analysis(engine):
                 "_sort_value", axis=1
             )
 
-            st.dataframe(supplier_df, use_container_width=True)
+            st.dataframe(supplier_df, width='stretch')
 
             # Show allocation insights
             st.write("**📊 Quality & Allocation Insights:**")
@@ -1943,7 +1943,7 @@ def show_allocation_export_options(opportunities: List[Dict], custom_days: int =
                             }
                         )
 
-                    st.dataframe(pd.DataFrame(zip_contents), use_container_width=True)
+                    st.dataframe(pd.DataFrame(zip_contents), width='stretch')
 
                 st.info(
                     f"💡 **Tip**: Extract the ZIP file to get individual CSV files for each supplier, ready for ordering"

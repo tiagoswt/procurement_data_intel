@@ -290,7 +290,7 @@ def create_order_file_uploader(context="default"):
                 "Quantity": [10, 5],
                 "Description": ["Anti-Age Serum", "Moisturizer"],
             }
-            st.dataframe(pd.DataFrame(simple_example), use_container_width=True)
+            st.dataframe(pd.DataFrame(simple_example), width='stretch')
 
             st.write("\n**Complex Format (with metadata):**")
             st.code(
@@ -501,7 +501,7 @@ def manual_supplier_processing(groq_api_key):
                 "Price": [29.99, 19.95, 39.50],
                 "Stock": [50, 25, 30],
             }
-            st.dataframe(pd.DataFrame(example_data), use_container_width=True)
+            st.dataframe(pd.DataFrame(example_data), width='stretch')
 
         return
 
@@ -641,7 +641,7 @@ def process_manual_supplier_files(
                                 }
                             )
                         st.dataframe(
-                            pd.DataFrame(sample_data), use_container_width=True
+                            pd.DataFrame(sample_data), width='stretch'
                         )
 
             else:
@@ -723,7 +723,7 @@ def preview_order_files(uploaded_files, header_row):
 
             # Show sample data
             if len(df) > 0:
-                st.dataframe(df.head(3), use_container_width=True)
+                st.dataframe(df.head(3), width='stretch')
             else:
                 st.warning(f"⚠️ No data rows found in {uploaded_file.name}")
 
@@ -1089,7 +1089,7 @@ def show_enhanced_order_optimization_table(optimizer):
 
     # Display the table
     df = pd.DataFrame(table_data)
-    st.dataframe(df, use_container_width=True, height=600)
+    st.dataframe(df, width='stretch', height=600)
 
     # Show additional analysis
     with st.expander("📈 Pricing Analysis"):
@@ -1592,7 +1592,7 @@ def load_order_files_section_with_auto(optimizer):
             files_df["Size"] = files_df["size_mb"].apply(lambda x: f"{x:.1f} MB")
             files_df["Modified"] = files_df["modified"].dt.strftime("%Y-%m-%d %H:%M")
             st.dataframe(
-                files_df[["name", "Size", "Modified"]], use_container_width=True
+                files_df[["name", "Size", "Modified"]], width='stretch'
             )
 
             col1, col2 = st.columns([3, 1])
@@ -1718,7 +1718,7 @@ def show_loaded_data_summary(optimizer):
             }
         )
 
-    st.dataframe(pd.DataFrame(list_data), use_container_width=True)
+    st.dataframe(pd.DataFrame(list_data), width='stretch')
 
     # Data readiness check
     col1, col2, col3 = st.columns(3)
@@ -1941,7 +1941,7 @@ def show_enhanced_results_table(optimizer, summary):
     # Display table
     if table_data:
         df = pd.DataFrame(table_data)
-        st.dataframe(df, use_container_width=True, height=500)
+        st.dataframe(df, width='stretch', height=500)
 
         # Enhanced table summary
         total_items = len(table_data)
@@ -2258,7 +2258,7 @@ def show_enhanced_supplier_breakdown(optimizer, summary):
         return
 
     # Display the table
-    st.dataframe(supplier_df, use_container_width=True)
+    st.dataframe(supplier_df, width='stretch')
 
     # NEW: Cost comparison explanation
     with st.expander("💰 Cost Comparison Columns Guide"):
@@ -2610,7 +2610,7 @@ def show_unfulfilled_products_table(optimizer):
 
     # Display table
     if not filtered_df.empty:
-        st.dataframe(filtered_df, use_container_width=True, height=400)
+        st.dataframe(filtered_df, width='stretch', height=400)
 
         # Analysis by type
         with st.expander("📊 Unfulfillment Analysis"):

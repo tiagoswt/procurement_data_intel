@@ -1009,7 +1009,7 @@ class EnhancedOrderOptimizer:
 
         # Display the table
         df = pd.DataFrame(table_data)
-        st.dataframe(df, use_container_width=True, height=600)
+        st.dataframe(df, width='stretch', height=600)
 
         # Show additional analysis
         with st.expander("📈 Pricing Analysis"):

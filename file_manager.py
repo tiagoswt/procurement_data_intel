@@ -150,7 +150,7 @@ def process_supplier_files(file_manager, groq_api_key, auto_detect_fields):
     df = pd.DataFrame(supplier_files)
     df["Size"] = df["size_mb"].apply(lambda x: f"{x:.1f} MB")
     df["Modified"] = df["modified"].dt.strftime("%Y-%m-%d %H:%M")
-    st.dataframe(df[["name", "Size", "Modified"]], use_container_width=True)
+    st.dataframe(df[["name", "Size", "Modified"]], width='stretch')
 
     # File selection
     selected_files = st.multiselect(
@@ -246,7 +246,7 @@ def process_internal_data_files(file_manager):
     df = pd.DataFrame(internal_files)
     df["Size"] = df["size_mb"].apply(lambda x: f"{x:.1f} MB")
     df["Modified"] = df["modified"].dt.strftime("%Y-%m-%d %H:%M")
-    st.dataframe(df[["name", "Size", "Modified"]], use_container_width=True)
+    st.dataframe(df[["name", "Size", "Modified"]], width='stretch')
 
     # File selection
     selected_internal_file = st.selectbox(
@@ -406,7 +406,7 @@ def process_internal_data_files(file_manager):
                                 }
                             )
                         st.dataframe(
-                            pd.DataFrame(sample_data), use_container_width=True
+                            pd.DataFrame(sample_data), width='stretch'
                         )
 
                     # Check if we can run opportunity analysis
@@ -472,7 +472,7 @@ def process_order_files(file_manager):
     df = pd.DataFrame(order_files)
     df["Size"] = df["size_mb"].apply(lambda x: f"{x:.1f} MB")
     df["Modified"] = df["modified"].dt.strftime("%Y-%m-%d %H:%M")
-    st.dataframe(df[["name", "Size", "Modified"]], use_container_width=True)
+    st.dataframe(df[["name", "Size", "Modified"]], width='stretch')
 
     # Basic file processing
     selected_order_files = st.multiselect(
@@ -506,7 +506,7 @@ def process_order_files(file_manager):
                     st.write(f"**Preview of {file_name}:**")
                     st.write(f"Columns found: {list(df.columns)}")
                     st.write(f"Rows: {len(df)}")
-                    st.dataframe(df.head(3), use_container_width=True)
+                    st.dataframe(df.head(3), width='stretch')
 
                 except Exception as e:
                     st.error(f"❌ Error reading {file_name}: {str(e)}")
@@ -620,7 +620,7 @@ def auto_opportunities_tab():
                             }
                         )
 
-                    st.dataframe(pd.DataFrame(opp_data), use_container_width=True)
+                    st.dataframe(pd.DataFrame(opp_data), width='stretch')
 
                     # Export option
                     if st.button("💾 Download Opportunities CSV"):

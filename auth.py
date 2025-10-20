@@ -63,7 +63,7 @@ class SimpleAuth:
 
             col_a, col_b, col_c = st.columns([1, 2, 1])
             with col_b:
-                if st.button("🚀 Login", type="primary", use_container_width=True):
+                if st.button("🚀 Login", type="primary", width='stretch'):
                     if self.authenticate(password):
                         st.success("✅ Authentication successful!")
                         st.rerun()
