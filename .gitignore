@@ -15,9 +15,8 @@ ENV/
 .vscode/
 .idea/
 
-# Data files (optional - uncomment if you don't want to commit data)
-# data/
-# analysis/
+# Data files
+data/
 
 # OS
 .DS_Store
