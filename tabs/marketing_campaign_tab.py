@@ -6,6 +6,7 @@ Supports configurable eligibility criteria and campaign presets.
 
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 import json
 import logging
 from datetime import datetime
@@ -344,6 +345,60 @@ def show_eligibility_summary(eligible_products: List[Dict]) -> None:
         )
 
 
+def show_brand_scatter_plot(eligible_products: List[Dict]) -> None:
+    """Display scatter plot of brands: Avg Discount vs Number of Eligible SKUs."""
+    if not eligible_products:
+        return
+
+    # Aggregate by brand
+    brand_data = {}
+    for product in eligible_products:
+        brand = product.get('brand') or 'Unknown'
+        if brand not in brand_data:
+            brand_data[brand] = {
+                'skus': set(),
+                'discounts': [],
+                'total_savings': 0.0
+            }
+        brand_data[brand]['skus'].add(product.get('ean'))
+        brand_data[brand]['discounts'].append(product.get('campaign_discount_pct', 0))
+        brand_data[brand]['total_savings'] += product.get('campaign_savings_per_unit', 0)
+
+    # Build DataFrame for plotting
+    plot_data = []
+    for brand, data in brand_data.items():
+        avg_discount = sum(data['discounts']) / len(data['discounts']) if data['discounts'] else 0
+        plot_data.append({
+            'Brand': brand,
+            'Eligible SKUs': len(data['skus']),
+            'Avg Discount (%)': round(avg_discount, 1),
+            'Total Savings': round(data['total_savings'], 2)
+        })
+
+    df_brands = pd.DataFrame(plot_data)
+
+    # Create scatter plot
+    fig = px.scatter(
+        df_brands,
+        x='Avg Discount (%)',
+        y='Eligible SKUs',
+        color='Brand',
+        hover_name='Brand',
+        hover_data={'Total Savings': ':.2f', 'Avg Discount (%)': ':.1f', 'Eligible SKUs': True},
+        title='Brand Overview: Average Discount vs Eligible SKUs'
+    )
+
+    fig.update_layout(
+        xaxis_title='Average Discount (%)',
+        yaxis_title='Number of Eligible SKUs',
+        height=450
+    )
+
+    fig.update_traces(marker=dict(size=10))
+
+    st.plotly_chart(fig, use_container_width=True)
+
+
 def show_eligibility_filters(eligible_products: List[Dict]) -> List[Dict]:
     """
     Display filter controls and return filtered list.
@@ -549,6 +604,9 @@ def marketing_campaign_tab(groq_api_key: str, api_key_valid: bool = False) -> No
 
     # Show summary
     show_eligibility_summary(eligible_products)
+
+    # Show brand scatter plot
+    show_brand_scatter_plot(eligible_products)
 
     st.divider()
 
