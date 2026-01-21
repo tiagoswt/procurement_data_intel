@@ -29,6 +29,7 @@ from file_manager import (
 
 # Import existing modules
 from tabs.opportunities_tab import opportunities_tab
+from tabs.marketing_campaign_tab import marketing_campaign_tab
 from models import FieldMapping, ProductData
 from processor import ProcurementProcessor
 from file_processor import FileProcessor
@@ -73,6 +74,10 @@ if "enhanced_order_optimizer" not in st.session_state:
     from enhanced_order_optimizer import EnhancedOrderOptimizer
 
     st.session_state.enhanced_order_optimizer = EnhancedOrderOptimizer()
+
+# Add campaign configuration to session state
+if "campaign_discount_threshold" not in st.session_state:
+    st.session_state.campaign_discount_threshold = 15.0
 
 # =============================================================================
 # PHASE 2: FEATURE FLAGS CONFIGURATION
@@ -229,9 +234,9 @@ def main():
         with tab4:
             order_optimization_tab()
     else:
-        # PHASE 3: Manual mode - clean 4-tab structure
-        tab1, tab2, tab3, tab4 = st.tabs(
-            ["📤 File Processing", "🎯 Opportunities", "🛒 Order Optimization", "🔄 CSV Delimiter Converter"]
+        # PHASE 3: Manual mode - clean 5-tab structure
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(
+            ["📤 File Processing", "🎯 Opportunities", "📣 Marketing Campaigns", "🛒 Order Optimization", "🔄 CSV Delimiter Converter"]
         )
 
         with tab1:
@@ -239,8 +244,10 @@ def main():
         with tab2:
             opportunities_tab(groq_api_key, api_key_valid=bool(groq_api_key))
         with tab3:
-            order_optimization_tab()
+            marketing_campaign_tab(groq_api_key, api_key_valid=bool(groq_api_key))
         with tab4:
+            order_optimization_tab()
+        with tab5:
             csv_delimiter_converter_tab()
 
 
