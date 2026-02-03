@@ -101,14 +101,18 @@ def find_eligible_products(
     eligible = []
 
     for opp in opportunities:
-        is_elig, discount_pct, baseline_price = check_eligibility(opp, discount_threshold)
+        is_elig, discount_pct, baseline_price = check_eligibility(
+            opp, discount_threshold
+        )
 
         if is_elig and baseline_price is not None:
             # Create enriched copy with campaign-specific fields
             enriched = opp.copy()
             enriched["campaign_baseline_price"] = baseline_price
             enriched["campaign_discount_pct"] = discount_pct
-            enriched["campaign_savings_per_unit"] = baseline_price - opp.get("quote_price", 0)
+            enriched["campaign_savings_per_unit"] = baseline_price - opp.get(
+                "quote_price", 0
+            )
             eligible.append(enriched)
 
     return eligible
@@ -134,9 +138,11 @@ def show_campaign_configuration() -> Dict:
                 "Minimum Discount Threshold (%)",
                 min_value=0.0,
                 max_value=50.0,
-                value=st.session_state.get("campaign_discount_threshold", DEFAULT_DISCOUNT_THRESHOLD),
+                value=st.session_state.get(
+                    "campaign_discount_threshold", DEFAULT_DISCOUNT_THRESHOLD
+                ),
                 step=1.0,
-                help="Products with discount >= this threshold are eligible for marketing campaigns"
+                help="Products with discount >= this threshold are eligible for marketing campaigns",
             )
             st.session_state.campaign_discount_threshold = discount_threshold
 
@@ -144,7 +150,7 @@ def show_campaign_configuration() -> Dict:
             st.metric(
                 "Current Threshold",
                 f"{discount_threshold:.0f}%",
-                help="Products must have at least this discount to be eligible"
+                help="Products must have at least this discount to be eligible",
             )
 
     return {"discount_threshold": discount_threshold}
@@ -160,7 +166,10 @@ def show_eligibility_summary(eligible_products: List[Dict]) -> None:
 
     # Calculate metrics
     total_products = len(eligible_products)
-    avg_discount = sum(p.get("campaign_discount_pct", 0) for p in eligible_products) / total_products
+    avg_discount = (
+        sum(p.get("campaign_discount_pct", 0) for p in eligible_products)
+        / total_products
+    )
 
     col1, col2 = st.columns(2)
 
@@ -168,14 +177,14 @@ def show_eligibility_summary(eligible_products: List[Dict]) -> None:
         st.metric(
             "Eligible Products",
             f"{total_products:,}",
-            help="Number of products meeting the discount threshold"
+            help="Number of products meeting the discount threshold",
         )
 
     with col2:
         st.metric(
             "Avg Discount",
             f"{avg_discount:.1f}%",
-            help="Average discount percentage across eligible products"
+            help="Average discount percentage across eligible products",
         )
 
 
@@ -187,45 +196,51 @@ def show_brand_scatter_plot(eligible_products: List[Dict]) -> None:
     # Aggregate by brand
     brand_data = {}
     for product in eligible_products:
-        brand = product.get('brand') or 'Unknown'
+        brand = product.get("brand") or "Unknown"
         if brand not in brand_data:
-            brand_data[brand] = {
-                'skus': set(),
-                'discounts': [],
-                'total_savings': 0.0
-            }
-        brand_data[brand]['skus'].add(product.get('ean'))
-        brand_data[brand]['discounts'].append(product.get('campaign_discount_pct', 0))
-        brand_data[brand]['total_savings'] += product.get('campaign_savings_per_unit', 0)
+            brand_data[brand] = {"skus": set(), "discounts": [], "total_savings": 0.0}
+        brand_data[brand]["skus"].add(product.get("ean"))
+        brand_data[brand]["discounts"].append(product.get("campaign_discount_pct", 0))
+        brand_data[brand]["total_savings"] += product.get(
+            "campaign_savings_per_unit", 0
+        )
 
     # Build DataFrame for plotting
     plot_data = []
     for brand, data in brand_data.items():
-        avg_discount = sum(data['discounts']) / len(data['discounts']) if data['discounts'] else 0
-        plot_data.append({
-            'Brand': brand,
-            'Eligible SKUs': len(data['skus']),
-            'Avg Discount (%)': round(avg_discount, 1),
-            'Total Savings': round(data['total_savings'], 2)
-        })
+        avg_discount = (
+            sum(data["discounts"]) / len(data["discounts"]) if data["discounts"] else 0
+        )
+        plot_data.append(
+            {
+                "Brand": brand,
+                "Eligible SKUs": len(data["skus"]),
+                "Avg Discount (%)": round(avg_discount, 1),
+                "Total Savings": round(data["total_savings"], 2),
+            }
+        )
 
     df_brands = pd.DataFrame(plot_data)
 
     # Create scatter plot
     fig = px.scatter(
         df_brands,
-        x='Avg Discount (%)',
-        y='Eligible SKUs',
-        color='Brand',
-        hover_name='Brand',
-        hover_data={'Total Savings': ':.2f', 'Avg Discount (%)': ':.1f', 'Eligible SKUs': True},
-        title='Brand Overview: Average Discount vs Eligible SKUs'
+        x="Avg Discount (%)",
+        y="Eligible SKUs",
+        color="Brand",
+        hover_name="Brand",
+        hover_data={
+            "Total Savings": ":.2f",
+            "Avg Discount (%)": ":.1f",
+            "Eligible SKUs": True,
+        },
+        title="Brand Overview: Average Discount vs Eligible SKUs",
     )
 
     fig.update_layout(
-        xaxis_title='Average Discount (%)',
-        yaxis_title='Number of Eligible SKUs',
-        height=450
+        xaxis_title="Average Discount (%)",
+        yaxis_title="Number of Eligible SKUs",
+        height=450,
     )
 
     fig.update_traces(marker=dict(size=10))
@@ -251,7 +266,9 @@ def show_eligibility_filters(eligible_products: List[Dict]) -> List[Dict]:
 
         # Get unique values for filters
         brands = sorted(set(p.get("brand", "N/A") or "N/A" for p in eligible_products))
-        suppliers = sorted(set(p.get("supplier", "N/A") or "N/A" for p in eligible_products))
+        suppliers = sorted(
+            set(p.get("supplier", "N/A") or "N/A" for p in eligible_products)
+        )
 
         with col1:
             selected_brands = st.multiselect(
@@ -259,7 +276,7 @@ def show_eligibility_filters(eligible_products: List[Dict]) -> List[Dict]:
                 options=brands,
                 default=[],
                 key="campaign_filter_brand",
-                placeholder="All brands"
+                placeholder="All brands",
             )
 
         with col2:
@@ -268,7 +285,7 @@ def show_eligibility_filters(eligible_products: List[Dict]) -> List[Dict]:
                 options=suppliers,
                 default=[],
                 key="campaign_filter_supplier",
-                placeholder="All suppliers"
+                placeholder="All suppliers",
             )
 
         with col3:
@@ -279,14 +296,12 @@ def show_eligibility_filters(eligible_products: List[Dict]) -> List[Dict]:
                 value=0.0,
                 step=1.0,
                 key="campaign_filter_min_discount",
-                help="Additional filter on top of threshold"
+                help="Additional filter on top of threshold",
             )
 
         with col4:
             bestsellers_only = st.checkbox(
-                "Bestsellers Only",
-                value=False,
-                key="campaign_filter_bestsellers"
+                "Bestsellers Only", value=False, key="campaign_filter_bestsellers"
             )
 
     # Apply filters
@@ -296,10 +311,16 @@ def show_eligibility_filters(eligible_products: List[Dict]) -> List[Dict]:
         filtered = [p for p in filtered if (p.get("brand") or "N/A") in selected_brands]
 
     if selected_suppliers:  # Empty list means "All"
-        filtered = [p for p in filtered if (p.get("supplier") or "N/A") in selected_suppliers]
+        filtered = [
+            p for p in filtered if (p.get("supplier") or "N/A") in selected_suppliers
+        ]
 
     if min_discount_filter > 0:
-        filtered = [p for p in filtered if p.get("campaign_discount_pct", 0) >= min_discount_filter]
+        filtered = [
+            p
+            for p in filtered
+            if p.get("campaign_discount_pct", 0) >= min_discount_filter
+        ]
 
     if bestsellers_only:
         filtered = [p for p in filtered if p.get("is_bestseller", False)]
@@ -338,13 +359,16 @@ def show_eligibility_table(eligible_products: List[Dict]) -> None:
 
     # Sort by discount % descending
     df["_discount_sort"] = df["Discount %"].str.replace("%", "").astype(float)
-    df = df.sort_values("_discount_sort", ascending=False).drop(columns=["_discount_sort"])
+    df = df.sort_values("_discount_sort", ascending=False).drop(
+        columns=["_discount_sort"]
+    )
 
     st.dataframe(df, use_container_width=True, height=500)
 
     # Column guide
     with st.expander("Column Guide"):
-        st.write("""
+        st.write(
+            """
         - **EAN**: Product barcode/identifier
         - **Quote Price**: Supplier's offered price
         - **Baseline Price**: Supplier price (internal reference price)
@@ -352,7 +376,8 @@ def show_eligibility_table(eligible_products: List[Dict]) -> None:
         - **Savings/Unit**: Absolute savings per unit (baseline - quote)
         - **Sales 90d/180d/365d**: Historical sales for context
         - **Bestseller**: High-volume product flag
-        """)
+        """
+        )
 
 
 def show_export_options(eligible_products: List[Dict]) -> None:
@@ -365,33 +390,43 @@ def show_export_options(eligible_products: List[Dict]) -> None:
     # Build export data
     export_data = []
     for opp in eligible_products:
-        export_data.append({
-            "EAN": pad_ean_code(opp.get("ean", "")),
-            "Product_Name": opp.get("product_name", ""),
-            "Brand": opp.get("brand", ""),
-            "Supplier": opp.get("supplier", ""),
-            "Quote_Price": f"{opp.get('quote_price', 0):.2f}".replace(".", ","),
-            "Baseline_Price": f"{opp.get('campaign_baseline_price', 0):.2f}".replace(".", ","),
-            "Discount_Percentage": f"{opp.get('campaign_discount_pct', 0):.1f}".replace(".", ","),
-            "Savings_Per_Unit": f"{opp.get('campaign_savings_per_unit', 0):.2f}".replace(".", ","),
-            "Sales_90d": opp.get("sales90d", 0),
-            "Sales_180d": opp.get("sales180d", 0),
-            "Sales_365d": opp.get("sales365d", 0),
-            "Current_Stock": opp.get("current_stock", 0),
-            "Is_Bestseller": opp.get("is_bestseller", False),
-        })
+        export_data.append(
+            {
+                "EAN": pad_ean_code(opp.get("ean", "")),
+                "Product_Name": opp.get("product_name", ""),
+                "Brand": opp.get("brand", ""),
+                "Supplier": opp.get("supplier", ""),
+                "Quote_Price": f"{opp.get('quote_price', 0):.2f}".replace(".", ","),
+                "Baseline_Price": f"{opp.get('campaign_baseline_price', 0):.2f}".replace(
+                    ".", ","
+                ),
+                "Discount_Percentage": f"{opp.get('campaign_discount_pct', 0):.1f}".replace(
+                    ".", ","
+                ),
+                "Savings_Per_Unit": f"{opp.get('campaign_savings_per_unit', 0):.2f}".replace(
+                    ".", ","
+                ),
+                "Sales_90d": opp.get("sales90d", 0),
+                "Sales_180d": opp.get("sales180d", 0),
+                "Sales_365d": opp.get("sales365d", 0),
+                "Current_Stock": opp.get("current_stock", 0),
+                "Is_Bestseller": opp.get("is_bestseller", False),
+            }
+        )
 
     df = pd.DataFrame(export_data)
     csv_content = df.to_csv(index=False, sep=";", encoding="utf-8")
 
-    filename = f"marketing_campaign_eligible_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    filename = (
+        f"marketing_campaign_eligible_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    )
 
     st.download_button(
         label="Download Eligible Products (CSV)",
         data=csv_content,
         file_name=filename,
         mime="text/csv",
-        help="CSV with semicolon delimiters for Excel compatibility"
+        help="CSV with semicolon delimiters for Excel compatibility",
     )
 
 
@@ -433,7 +468,9 @@ def calculate_weighted_brand_discounts(eligible_products: List[Dict]) -> List[Di
         brand_data[brand]["discount_sum"] += discount
         brand_data[brand]["skus"].append(product.get("ean"))
         brand_data[brand]["products"].append(product)
-        brand_data[brand]["total_savings"] += product.get("campaign_savings_per_unit", 0)
+        brand_data[brand]["total_savings"] += product.get(
+            "campaign_savings_per_unit", 0
+        )
 
     # Calculate weighted average per brand
     result = []
@@ -445,14 +482,16 @@ def calculate_weighted_brand_discounts(eligible_products: List[Dict]) -> List[Di
             # Fallback to simple average if no sales data
             weighted_discount = data["discount_sum"] / sku_count if sku_count > 0 else 0
 
-        result.append({
-            "brand": brand,
-            "weighted_discount_pct": weighted_discount,
-            "total_sales90d": data["total_sales"],
-            "sku_count": sku_count,
-            "total_savings": data["total_savings"],
-            "products": data["products"],
-        })
+        result.append(
+            {
+                "brand": brand,
+                "weighted_discount_pct": weighted_discount,
+                "total_sales90d": data["total_sales"],
+                "sku_count": sku_count,
+                "total_savings": data["total_savings"],
+                "products": data["products"],
+            }
+        )
 
     return result
 
@@ -472,10 +511,12 @@ def show_weighted_eligibility_config() -> Dict:
                 "Minimum Weighted Discount Threshold (%)",
                 min_value=0.0,
                 max_value=50.0,
-                value=st.session_state.get("weighted_discount_threshold", DEFAULT_DISCOUNT_THRESHOLD),
+                value=st.session_state.get(
+                    "weighted_discount_threshold", DEFAULT_DISCOUNT_THRESHOLD
+                ),
                 step=1.0,
                 key="weighted_threshold_slider",
-                help="Brands with weighted average discount >= this threshold are eligible"
+                help="Brands with weighted average discount >= this threshold are eligible",
             )
             st.session_state.weighted_discount_threshold = weighted_threshold
 
@@ -483,7 +524,7 @@ def show_weighted_eligibility_config() -> Dict:
             st.metric(
                 "Current Threshold",
                 f"{weighted_threshold:.0f}%",
-                help="Brands must have at least this weighted average discount to be eligible"
+                help="Brands must have at least this weighted average discount to be eligible",
             )
 
     return {"weighted_threshold": weighted_threshold}
@@ -514,7 +555,7 @@ def show_weighted_eligibility_filters(brand_results: List[Dict]) -> List[Dict]:
                 options=brands,
                 default=[],
                 key="weighted_filter_brand",
-                placeholder="All brands"
+                placeholder="All brands",
             )
 
         with col2:
@@ -525,7 +566,7 @@ def show_weighted_eligibility_filters(brand_results: List[Dict]) -> List[Dict]:
                 value=0.0,
                 step=1.0,
                 key="weighted_filter_min_discount",
-                help="Additional filter on weighted discount"
+                help="Additional filter on weighted discount",
             )
 
         with col3:
@@ -536,7 +577,7 @@ def show_weighted_eligibility_filters(brand_results: List[Dict]) -> List[Dict]:
                 value=1,
                 step=1,
                 key="weighted_filter_min_skus",
-                help="Minimum number of SKUs per brand"
+                help="Minimum number of SKUs per brand",
             )
 
     # Apply filters
@@ -546,7 +587,11 @@ def show_weighted_eligibility_filters(brand_results: List[Dict]) -> List[Dict]:
         filtered = [b for b in filtered if b.get("brand") in selected_brands]
 
     if min_weighted_discount > 0:
-        filtered = [b for b in filtered if b.get("weighted_discount_pct", 0) >= min_weighted_discount]
+        filtered = [
+            b
+            for b in filtered
+            if b.get("weighted_discount_pct", 0) >= min_weighted_discount
+        ]
 
     if min_sku_count > 1:
         filtered = [b for b in filtered if b.get("sku_count", 0) >= min_sku_count]
@@ -565,7 +610,9 @@ def show_weighted_eligibility_summary(brand_results: List[Dict]) -> None:
     # Calculate metrics
     total_brands = len(brand_results)
     total_skus = sum(b.get("sku_count", 0) for b in brand_results)
-    avg_weighted_discount = sum(b.get("weighted_discount_pct", 0) for b in brand_results) / total_brands
+    avg_weighted_discount = (
+        sum(b.get("weighted_discount_pct", 0) for b in brand_results) / total_brands
+    )
 
     col1, col2, col3 = st.columns(3)
 
@@ -573,21 +620,21 @@ def show_weighted_eligibility_summary(brand_results: List[Dict]) -> None:
         st.metric(
             "Eligible Brands",
             f"{total_brands:,}",
-            help="Number of brands meeting the weighted discount threshold"
+            help="Number of brands meeting the weighted discount threshold",
         )
 
     with col2:
         st.metric(
             "Total SKUs",
             f"{total_skus:,}",
-            help="Total number of SKUs across eligible brands"
+            help="Total number of SKUs across eligible brands",
         )
 
     with col3:
         st.metric(
             "Avg Weighted Discount",
             f"{avg_weighted_discount:.1f}%",
-            help="Average of weighted discounts across eligible brands"
+            help="Average of weighted discounts across eligible brands",
         )
 
 
@@ -599,13 +646,17 @@ def show_weighted_brand_scatter_plot(brand_results: List[Dict]) -> None:
     # Build DataFrame for plotting
     plot_data = []
     for brand_data in brand_results:
-        plot_data.append({
-            "Brand": brand_data.get("brand", "Unknown"),
-            "SKU Count": brand_data.get("sku_count", 0),
-            "Weighted Discount (%)": round(brand_data.get("weighted_discount_pct", 0), 1),
-            "Total Sales 90d": brand_data.get("total_sales90d", 0),
-            "Total Savings": round(brand_data.get("total_savings", 0), 2),
-        })
+        plot_data.append(
+            {
+                "Brand": brand_data.get("brand", "Unknown"),
+                "SKU Count": brand_data.get("sku_count", 0),
+                "Weighted Discount (%)": round(
+                    brand_data.get("weighted_discount_pct", 0), 1
+                ),
+                "Total Sales 90d": brand_data.get("total_sales90d", 0),
+                "Total Savings": round(brand_data.get("total_savings", 0), 2),
+            }
+        )
 
     df_brands = pd.DataFrame(plot_data)
 
@@ -614,7 +665,7 @@ def show_weighted_brand_scatter_plot(brand_results: List[Dict]) -> None:
         df_brands,
         x="Weighted Discount (%)",
         y="SKU Count",
-        size="Total Sales 90d",
+        # size="Total Sales 90d",
         color="Brand",
         hover_name="Brand",
         hover_data={
@@ -623,13 +674,13 @@ def show_weighted_brand_scatter_plot(brand_results: List[Dict]) -> None:
             "Total Sales 90d": ":,",
             "Total Savings": ":.2f",
         },
-        title="Brand Overview: Weighted Discount vs SKU Count (sized by Sales 90d)"
+        title="Brand Overview: Weighted Discount vs SKU Count (sized by Sales 90d)",
     )
 
     fig.update_layout(
         xaxis_title="Weighted Average Discount (%)",
         yaxis_title="Number of SKUs",
-        height=450
+        height=450,
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -675,13 +726,16 @@ def show_weighted_eligibility_table(brand_results: List[Dict]) -> None:
 
     # Sort by discount % descending
     df["_discount_sort"] = df["Discount %"].str.replace("%", "").astype(float)
-    df = df.sort_values("_discount_sort", ascending=False).drop(columns=["_discount_sort"])
+    df = df.sort_values("_discount_sort", ascending=False).drop(
+        columns=["_discount_sort"]
+    )
 
     st.dataframe(df, use_container_width=True, height=500)
 
     # Column guide
     with st.expander("Column Guide"):
-        st.write("""
+        st.write(
+            """
         - **EAN**: Product barcode/identifier
         - **Quote Price**: Supplier's offered price
         - **Baseline Price**: Supplier price (internal reference price)
@@ -689,7 +743,8 @@ def show_weighted_eligibility_table(brand_results: List[Dict]) -> None:
         - **Savings/Unit**: Absolute savings per unit (baseline - quote)
         - **Sales 90d/180d/365d**: Historical sales for context
         - **Bestseller**: High-volume product flag
-        """)
+        """
+        )
 
 
 def show_weighted_export_options(brand_results: List[Dict]) -> None:
@@ -702,18 +757,26 @@ def show_weighted_export_options(brand_results: List[Dict]) -> None:
     # Build export data (brand level)
     export_data = []
     for brand_data in brand_results:
-        export_data.append({
-            "Brand": brand_data.get("brand", ""),
-            "Weighted_Discount_Percentage": f"{brand_data.get('weighted_discount_pct', 0):.1f}".replace(".", ","),
-            "SKU_Count": brand_data.get("sku_count", 0),
-            "Total_Sales_90d": brand_data.get("total_sales90d", 0),
-            "Total_Savings": f"{brand_data.get('total_savings', 0):.2f}".replace(".", ","),
-        })
+        export_data.append(
+            {
+                "Brand": brand_data.get("brand", ""),
+                "Weighted_Discount_Percentage": f"{brand_data.get('weighted_discount_pct', 0):.1f}".replace(
+                    ".", ","
+                ),
+                "SKU_Count": brand_data.get("sku_count", 0),
+                "Total_Sales_90d": brand_data.get("total_sales90d", 0),
+                "Total_Savings": f"{brand_data.get('total_savings', 0):.2f}".replace(
+                    ".", ","
+                ),
+            }
+        )
 
     df = pd.DataFrame(export_data)
     csv_content = df.to_csv(index=False, sep=";", encoding="utf-8")
 
-    filename = f"weighted_campaign_eligible_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    filename = (
+        f"weighted_campaign_eligible_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    )
 
     st.download_button(
         label="Download Weighted Results (CSV)",
@@ -721,7 +784,7 @@ def show_weighted_export_options(brand_results: List[Dict]) -> None:
         file_name=filename,
         mime="text/csv",
         key="weighted_export_button",
-        help="CSV with semicolon delimiters for Excel compatibility"
+        help="CSV with semicolon delimiters for Excel compatibility",
     )
 
 
@@ -765,7 +828,9 @@ def marketing_campaign_tab(groq_api_key: str, api_key_valid: bool = False) -> No
     st.divider()
 
     # Calculate eligibility
-    eligible_products = find_eligible_products(opportunities, config["discount_threshold"])
+    eligible_products = find_eligible_products(
+        opportunities, config["discount_threshold"]
+    )
 
     # Apply filters (after configuration, affects summary and scatter plot)
     filtered_products = show_eligibility_filters(eligible_products)
@@ -808,7 +873,8 @@ def marketing_campaign_tab(groq_api_key: str, api_key_valid: bool = False) -> No
 
     # Filter by weighted threshold
     eligible_brands = [
-        b for b in brand_results
+        b
+        for b in brand_results
         if b.get("weighted_discount_pct", 0) >= weighted_config["weighted_threshold"]
     ]
 
