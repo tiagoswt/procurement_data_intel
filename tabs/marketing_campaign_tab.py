@@ -248,6 +248,51 @@ def show_brand_scatter_plot(eligible_products: List[Dict]) -> None:
     st.plotly_chart(fig, use_container_width=True)
 
 
+def show_sku_scatter_plot(eligible_products: List[Dict]) -> None:
+    """Display scatter plot of SKUs: Discount % vs Sales 90d."""
+    if not eligible_products:
+        return
+
+    plot_data = []
+    for product in eligible_products:
+        brand = product.get("brand") or "Unknown"
+        name = product.get("product_name", "N/A")[:50]
+        plot_data.append(
+            {
+                "SKU": f"{brand} - {name}",
+                "Brand": brand,
+                "Discount (%)": round(product.get("campaign_discount_pct", 0), 1),
+                "Sales 90d": product.get("sales90d", 0),
+            }
+        )
+
+    df_skus = pd.DataFrame(plot_data)
+
+    fig = px.scatter(
+        df_skus,
+        x="Discount (%)",
+        y="Sales 90d",
+        color="Brand",
+        hover_name="SKU",
+        hover_data={
+            "Discount (%)": ":.1f",
+            "Sales 90d": ":,",
+            "Brand": False,
+        },
+        title="SKU Overview: Discount % vs Sales 90d",
+    )
+
+    fig.update_layout(
+        xaxis_title="Discount (%)",
+        yaxis_title="Sales 90d",
+        height=450,
+    )
+
+    fig.update_traces(marker=dict(size=8))
+
+    st.plotly_chart(fig, use_container_width=True)
+
+
 def show_eligibility_filters(eligible_products: List[Dict]) -> List[Dict]:
     """
     Display filter controls and return filtered list.
@@ -840,6 +885,9 @@ def marketing_campaign_tab(groq_api_key: str, api_key_valid: bool = False) -> No
 
     # Show brand scatter plot (uses filtered products)
     show_brand_scatter_plot(filtered_products)
+
+    # Show SKU scatter plot (uses filtered products)
+    show_sku_scatter_plot(filtered_products)
 
     st.divider()
 
