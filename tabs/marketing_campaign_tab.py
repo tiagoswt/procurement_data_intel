@@ -285,7 +285,7 @@ def show_sku_scatter_plot(eligible_products: List[Dict]) -> None:
     fig.update_layout(
         xaxis_title="Discount (%)",
         yaxis_title="Sales 90d",
-        height=450,
+        height=900,
     )
 
     fig.update_traces(marker=dict(size=8))
