@@ -1,3 +1,4 @@
+import html
 import io
 import json
 from datetime import datetime
@@ -122,26 +123,26 @@ def export_html_report(
             bar_w = int((rate / max(max_rate, 1)) * 200)
             y = i * 30 + 10
             svg_bars += f'<rect x="130" y="{y}" width="{bar_w}" height="20" fill="#4CAF50"/>'
-            svg_bars += f'<text x="125" y="{y+15}" text-anchor="end" font-size="11">{str(s.get("supplier",""))[:16]}</text>'
+            svg_bars += f'<text x="125" y="{y+15}" text-anchor="end" font-size="11">{html.escape(str(s.get("supplier",""))[:16])}</text>'
             svg_bars += f'<text x="{130+bar_w+5}" y="{y+15}" font-size="11">{rate:.0f}%</text>'
     svg_h = max(200, len(supplier_win_rates[:6]) * 30 + 20)
     supplier_svg = f'<svg width="400" height="{svg_h}" style="background:#f5f5f5;border-radius:6px;padding:8px">{svg_bars}</svg>'
 
     opp_rows = "".join(
-        f"<tr><td>{o.get('ean','')}</td><td>{o.get('product_name','')}</td>"
-        f"<td>{o.get('priority_label','')}</td><td><strong>{o.get('enhanced_score','-')}</strong></td>"
+        f"<tr><td>{html.escape(str(o.get('ean','')))}</td><td>{html.escape(str(o.get('product_name','')))}</td>"
+        f"<td>{html.escape(str(o.get('priority_label','')))}</td><td><strong>{o.get('enhanced_score','-')}</strong></td>"
         f"<td>{o.get('net_need',0)}</td><td>€{o.get('quote_price',0):.2f}</td>"
-        f"<td>{o.get('supplier','')}</td><td style='color:green'>€{o.get('total_savings',0):.2f}</td></tr>"
+        f"<td>{html.escape(str(o.get('supplier','')))}</td><td style='color:green'>€{o.get('total_savings',0):.2f}</td></tr>"
         for o in top_opps
     )
     stockout_rows = "".join(
-        f"<tr><td>{s.get('ean','')}</td><td>{s.get('description','')}</td>"
+        f"<tr><td>{html.escape(str(s.get('ean','')))}</td><td>{html.escape(str(s.get('description','')))}</td>"
         f"<td style='color:{'#ff4444' if (s.get('days_cover',999)<7) else '#ff8c00'};font-weight:bold'>{s.get('days_cover',0):.0f}d</td>"
-        f"<td>{s.get('best_supplier','')}</td></tr>"
+        f"<td>{html.escape(str(s.get('best_supplier','')))}</td></tr>"
         for s in stockout_risks[:5]
     )
     brand_rows = "".join(
-        f"<tr><td>{b.get('brand','')}</td>"
+        f"<tr><td>{html.escape(str(b.get('brand','')))}</td>"
         f"<td style='color:{'#ff4444' if b.get('price_trend_pct',0)>1 else ('#4CAF50' if b.get('price_trend_pct',0)<-1 else '#888')}'>"
         f"{'↑' if b.get('price_trend_pct',0)>1 else ('↓' if b.get('price_trend_pct',0)<-1 else '→')} {abs(b.get('price_trend_pct',0)):.1f}%</td>"
         f"<td>{b.get('at_risk_skus',0)}</td><td>{b.get('coverage_pct',0):.0f}%</td></tr>"
@@ -163,7 +164,7 @@ td{{padding:6px 8px;border-bottom:1px solid #eee}}
 </style></head>
 <body>
 <h1>Procurement Intelligence Report</h1>
-<p style="color:#888">Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')} · Batch: {str(batch_id)[:8]}...</p>
+<p style="color:#888">Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')} · Batch: {html.escape(str(batch_id)[:8])}...</p>
 <div class="kpis">
   <div class="kpi"><div class="val">{len(opportunities)}</div><div class="label">Opportunities</div></div>
   <div class="kpi"><div class="val" style="color:#cc0000">{critical_count}</div><div class="label">Critical Stockouts</div></div>
