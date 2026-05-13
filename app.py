@@ -31,6 +31,7 @@ from file_manager import (
 from tabs.opportunities_tab import opportunities_tab
 from db.database import ProcurementDB
 from tabs.marketing_campaign_tab import marketing_campaign_tab
+from tabs.analytics_tab import analytics_tab
 from models import FieldMapping, ProductData
 from processor import ProcurementProcessor
 from file_processor import FileProcessor
@@ -236,8 +237,8 @@ def main():
             order_optimization_tab()
     else:
         # PHASE 3: Manual mode - clean 5-tab structure
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(
-            ["📤 File Processing", "🎯 Opportunities", "📣 Marketing Campaigns", "🛒 Order Optimization", "🔄 CSV Delimiter Converter"]
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
+            ["📤 File Processing", "🎯 Opportunities", "📊 Analytics", "📣 Marketing Campaigns", "🛒 Order Optimization", "🔄 CSV Delimiter Converter"]
         )
 
         with tab1:
@@ -245,10 +246,12 @@ def main():
         with tab2:
             opportunities_tab(groq_api_key, api_key_valid=bool(groq_api_key))
         with tab3:
-            marketing_campaign_tab(groq_api_key, api_key_valid=bool(groq_api_key))
+            analytics_tab()
         with tab4:
-            order_optimization_tab()
+            marketing_campaign_tab(groq_api_key, api_key_valid=bool(groq_api_key))
         with tab5:
+            order_optimization_tab()
+        with tab6:
             csv_delimiter_converter_tab()
 
 
