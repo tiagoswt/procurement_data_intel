@@ -9,6 +9,7 @@ import pandas as pd
 from datetime import datetime
 from typing import List, Dict, Any
 from utils import pad_ean_code
+from db.database import ProcurementDB
 
 
 def get_safe_allocated_quantity(opp: Dict) -> int:
@@ -214,6 +215,13 @@ def opportunities_tab(groq_api_key, api_key_valid=False):
             if success:
                 # Show data summary
                 show_internal_data_summary(engine)
+                # Persist internal data to SQLite
+                run_id = st.session_state.get("current_run_id")
+                if run_id and engine.internal_data:
+                    try:
+                        ProcurementDB().save_internal_data(run_id, engine.internal_data)
+                    except Exception:
+                        pass
                 show_smart_opportunity_analysis(engine)
             else:
                 st.error(
