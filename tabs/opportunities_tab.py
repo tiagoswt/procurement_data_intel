@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import List, Dict, Any
 from utils import pad_ean_code
 from db.database import ProcurementDB
+from analysis.enhanced_scoring import compute_enhanced_scores
 
 
 def get_safe_allocated_quantity(opp: Dict) -> int:
@@ -170,6 +171,20 @@ def opportunities_tab(groq_api_key, api_key_valid=False):
             return
 
     engine = st.session_state.opportunity_engine
+
+    # Brand weight sidebar control
+    brand_weights = {}
+    with st.sidebar.expander("⚡ Enhanced Scoring Weights", expanded=False):
+        st.caption("Boost tier-1 brands in the enhanced score (1.0 = no boost)")
+        if st.session_state.get("processed_data"):
+            opp_engine_for_weights = st.session_state.get("opportunity_engine")
+            if opp_engine_for_weights and opp_engine_for_weights.internal_data:
+                brands = sorted({p.get("brand", "") for p in opp_engine_for_weights.internal_data if p.get("brand")})
+                for brand in brands[:10]:
+                    brand_weights[brand] = st.slider(
+                        brand, min_value=1.0, max_value=1.5, value=1.0, step=0.1,
+                        key=f"bw_{brand}"
+                    )
 
     # Check if internal data is already loaded (from auto-loading)
     if hasattr(engine, "internal_data") and engine.internal_data:
@@ -699,6 +714,28 @@ def show_enhanced_allocation_filters(engine):
             f"({priority_1_count} Priority 1, {priority_2_count} Priority 2) "
         )
 
+    # Apply enhanced scoring
+    if filtered:
+        for opp in filtered:
+            opp["brand_weight"] = st.session_state.get(
+                f"bw_{opp.get('brand', '')}", 1.0
+            )
+        filtered = compute_enhanced_scores(filtered)
+
+    # Sort control
+    sort_col1, sort_col2 = st.columns([1, 3])
+    with sort_col1:
+        sort_mode = st.radio(
+            "Sort by",
+            options=["Current (P1/P2)", "Enhanced Score"],
+            horizontal=True,
+            key="opp_sort_mode",
+        )
+    if sort_mode == "Enhanced Score":
+        filtered = sorted(filtered, key=lambda x: x.get("enhanced_score", 0), reverse=True)
+    else:
+        filtered = sorted(filtered, key=lambda x: (x.get("priority", 9), -x.get("total_savings", 0)))
+
     return filtered, custom_days_input
 
 
@@ -829,6 +866,8 @@ def show_enhanced_allocation_table(opportunities: List[Dict], custom_days: int =
             {
                 # ADD PRIORITY AS FIRST COLUMN
                 "Priority": priority_display,
+                "Enh. Score": opp.get("enhanced_score", "-"),
+                "Score Breakdown": opp.get("score_breakdown", ""),
                 "EAN": pad_ean_code(opp.get("ean", "")),
                 "Product": product_name,
                 "Brand": opp.get("brand", "N/A"),
