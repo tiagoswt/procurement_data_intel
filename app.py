@@ -29,6 +29,7 @@ from file_manager import (
 
 # Import existing modules
 from tabs.opportunities_tab import opportunities_tab
+from db.database import ProcurementDB
 from tabs.marketing_campaign_tab import marketing_campaign_tab
 from models import FieldMapping, ProductData
 from processor import ProcurementProcessor
@@ -669,6 +670,15 @@ def process_manual_supplier_files(
         # Store results in session state
         st.session_state.processed_data = all_products
         st.session_state.processing_results = all_results
+
+        # Auto-save to SQLite (additive — never blocks the UI if it fails)
+        try:
+            db = ProcurementDB()
+            source_file_names = [f.name for f in uploaded_files]
+            run_id = db.save_supplier_batch(source_file_names, all_products)
+            st.session_state.current_run_id = run_id
+        except Exception as _db_err:
+            pass  # DB save is best-effort; processing still succeeds
 
         # Show final summary
         total_products = len(all_products)
