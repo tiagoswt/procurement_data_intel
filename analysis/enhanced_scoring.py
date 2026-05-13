@@ -17,17 +17,25 @@ def compute_enhanced_scores(opportunities: List[Dict]) -> List[Dict]:
 
     raw_scores = []
     for opp in opportunities:
-        daily = (opp.get("sales90d", 0) or 0) / 90
+        def _num(v, default=0):
+            try:
+                f = float(v) if v is not None else default
+                return f if f == f else default  # NaN check: NaN != NaN
+            except (TypeError, ValueError):
+                return default
+
+        daily = _num(opp.get("sales90d")) / 90
         velocity = daily / max_daily
 
-        best_buy = (opp.get("price_breakdown") or {}).get("best_buy_price") or opp.get("baseline_price", 0)
-        supplier_price = opp.get("quote_price", 0) or 0
+        best_buy_raw = (opp.get("price_breakdown") or {}).get("best_buy_price") or opp.get("baseline_price", 0)
+        best_buy = _num(best_buy_raw)
+        supplier_price = _num(opp.get("quote_price"))
         margin = max(1.0, best_buy / supplier_price) if supplier_price > 0 and best_buy else 1.0
 
-        days_cover = opp.get("days_of_cover", 999) or 999
+        days_cover = _num(opp.get("days_of_cover"), 999) or 999
         urgency = max(1.0, 30 / max(1, days_cover))
 
-        brand_weight = opp.get("brand_weight", 1.0) or 1.0
+        brand_weight = _num(opp.get("brand_weight"), 1.0) or 1.0
 
         overstock = max(1.0, days_cover / 180) if days_cover > 180 else 1.0
 
