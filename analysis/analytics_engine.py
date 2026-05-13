@@ -155,7 +155,7 @@ class AnalyticsEngine:
             sku_count = len(products)
             brand_eans = {p.get("ean") for p in products}
             covered = len(brand_eans & latest_eans)
-            coverage_pct = (covered / sku_count * 100) if sku_count > 0 else 0
+            coverage_pct = (covered / len(brand_eans) * 100) if brand_eans else 0
             at_risk = 0
             for p in products:
                 sales90d = p.get("sales90d", 0) or 0
