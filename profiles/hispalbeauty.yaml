@@ -1,0 +1,24 @@
+supplier_code: hispalbeauty
+supplier_name: "Hispalbeauty"
+
+match:
+  filename_patterns:
+    - "*HISPALBEAUTY*"
+    - "*hispalbeauty*"
+
+brand_source: column
+brand_column: "MARCA"
+
+defaults:
+  currency: EUR
+
+sheets:
+  - match: "*"
+    header_row: 1
+    decimal_sep: "."
+    brand_column: "MARCA"
+    columns:
+      ean:          "EAN"
+      product_name: "DESCRIPCIÓN"
+      price:        "PRECIO"
+      quantity:     "STOCK"
