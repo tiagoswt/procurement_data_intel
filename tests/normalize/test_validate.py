@@ -139,10 +139,12 @@ def test_zero_yield_warning_message():
     ws1.append(["Code", "Label", "Cost"])
     ws1.append(["12345", "Item X", "7.50"])
 
-    # Sheet 2: correct columns → valid products so ingest() does not raise
+    # Sheet 2: correct columns → valid products so ingest() does not raise.
+    # 2 valid rows + 1 bad row = 2/3 ≈ 67% yield — safely above the 50% min_yield threshold.
     ws2 = wb.create_sheet("GoodSheet")
     ws2.append(["EAN", "Name", "Price"])
     ws2.append(["1234567890123", "Prod A", "9.99"])
+    ws2.append(["2345678901234", "Prod B", "4.50"])
 
     with tempfile.NamedTemporaryFile(suffix="_test_offer.xlsx", delete=False) as f:
         tmp_path = f.name
