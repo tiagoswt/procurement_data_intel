@@ -16,7 +16,10 @@ def validate_rows(rows: List[dict]) -> Tuple[List[ProductData], List[str]]:
         src = f"row {row.get('source_row', '?')} sheet '{row.get('source_sheet', '?')}'"
 
         price = row.get("price")
-        if price is None or float(price) <= 0:
+        try:
+            if price is None or float(price) <= 0:
+                continue
+        except (ValueError, TypeError):
             continue
 
         product_name = row.get("product_name")
