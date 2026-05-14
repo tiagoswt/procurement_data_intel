@@ -44,6 +44,11 @@ def ingest(file_path: str) -> Tuple[List[ProductData], List[str]]:
         products, val_warnings = validate_rows(mapped_rows)
         all_products.extend(products)
         all_warnings.extend(val_warnings)
+        if len(df) > 0 and len(products) == 0:
+            all_warnings.append(
+                f"[ZERO YIELD] Sheet '{sheet_name}': 0 products from {len(df)} input rows — "
+                f"check that profile column names match actual Excel headers"
+            )
 
     if not all_products:
         raise NormalizeError(f"No valid rows extracted from {fp.name}")
