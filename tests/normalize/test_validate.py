@@ -63,23 +63,37 @@ from pathlib import Path
 
 
 def test_zero_yield_warning_in_ingest():
-    """_test_supplier.yaml with a real file that has wrong column names produces [ZERO YIELD]."""
-    # Use _test_supplier profile — matches *test_offer* filename
-    # Create a minimal xlsx with wrong column headers (not EAN/Name/Price)
+    """Sheet 1 has wrong column names (→ [ZERO YIELD]); Sheet 2 has valid data so ingest() succeeds."""
     import tempfile
     import openpyxl
     wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.append(["Code", "Label", "Cost"])  # wrong column names
-    ws.append(["12345", "Item A", "5.00"])
-    ws.append(["67890", "Item B", "3.50"])
+
+    # Sheet 1: wrong column headers — mapper returns rows with all-None fields
+    # → validate_rows produces 0 products → [ZERO YIELD] warning is emitted
+    ws1 = wb.active
+    ws1.title = "WrongHeaders"
+    ws1.append(["Code", "Label", "Cost"])  # wrong column names
+    ws1.append(["12345", "Item A", "5.00"])
+    ws1.append(["67890", "Item B", "3.50"])
+
+    # Sheet 2: correct column headers with valid data → ingest() succeeds overall.
+    # Need enough valid rows so total yield >= 50% (default min_yield):
+    # Sheet 1 has 2 data rows (all invalid) + Sheet 2 has 4 data rows (all valid) = 4/6 = 67% OK
+    ws2 = wb.create_sheet("ValidData")
+    ws2.append(["EAN", "Name", "Price"])
+    ws2.append(["1234567890123", "Prod A", "9.99"])
+    ws2.append(["2345678901234", "Prod B", "4.50"])
+    ws2.append(["3456789012345", "Prod C", "2.00"])
+    ws2.append(["4567890123456", "Prod D", "6.75"])
+
     with tempfile.NamedTemporaryFile(suffix="_test_offer.xlsx", delete=False) as f:
         tmp_path = f.name
     wb.save(tmp_path)
 
     try:
-        with pytest.raises(NormalizeError, match="No valid rows"):
-            ingest(tmp_path)
+        products, warnings = ingest(tmp_path)
+        assert len(products) >= 1
+        assert any("[ZERO YIELD]" in w for w in warnings)
     finally:
         import os
         try:
@@ -88,8 +102,8 @@ def test_zero_yield_warning_in_ingest():
             pass  # Windows may hold a file lock; cleanup is best-effort
 
 
-def test_zero_yield_warning_message():
-    """When a sheet produces 0 products, a [ZERO YIELD] warning must appear."""
+def test_skip_summary_appears_on_partial_yield():
+    """When some rows are skipped (e.g. price=0), a [SKIP SUMMARY] warning must appear."""
     import tempfile
     import openpyxl
     wb = openpyxl.Workbook()
@@ -105,6 +119,39 @@ def test_zero_yield_warning_message():
         products, warnings = ingest(tmp_path)
         assert len(products) == 1
         assert any("[SKIP SUMMARY]" in w for w in warnings)
+    finally:
+        import os
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass  # Windows may hold a file lock; cleanup is best-effort
+
+
+def test_zero_yield_warning_message():
+    """When a sheet produces 0 products due to wrong headers, a [ZERO YIELD] warning must appear."""
+    import tempfile
+    import openpyxl
+    wb = openpyxl.Workbook()
+
+    # Sheet 1: wrong column names → all rows map to None fields → 0 products → [ZERO YIELD]
+    ws1 = wb.active
+    ws1.title = "BadSheet"
+    ws1.append(["Code", "Label", "Cost"])
+    ws1.append(["12345", "Item X", "7.50"])
+
+    # Sheet 2: correct columns → valid products so ingest() does not raise
+    ws2 = wb.create_sheet("GoodSheet")
+    ws2.append(["EAN", "Name", "Price"])
+    ws2.append(["1234567890123", "Prod A", "9.99"])
+
+    with tempfile.NamedTemporaryFile(suffix="_test_offer.xlsx", delete=False) as f:
+        tmp_path = f.name
+    wb.save(tmp_path)
+
+    try:
+        products, warnings = ingest(tmp_path)
+        assert len(products) >= 1
+        assert any("[ZERO YIELD]" in w for w in warnings)
     finally:
         import os
         try:
