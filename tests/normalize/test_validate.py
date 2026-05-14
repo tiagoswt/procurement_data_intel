@@ -56,7 +56,6 @@ def test_summary_total_count():
     assert "2 skipped" in summary
 
 
-import pytest
 from normalize import ingest
 from normalize.exceptions import NormalizeError
 from pathlib import Path

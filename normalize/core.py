@@ -51,6 +51,10 @@ def ingest(file_path: str) -> Tuple[List[ProductData], List[str]]:
             )
 
     if not all_products:
+        zero_yield_msgs = [w for w in all_warnings if w.startswith("[ZERO YIELD]")]
+        if zero_yield_msgs:
+            detail = "; ".join(zero_yield_msgs)
+            raise NormalizeError(f"No valid rows extracted from {fp.name}. {detail}")
         raise NormalizeError(f"No valid rows extracted from {fp.name}")
 
     min_yield = profile.get("min_yield", 0.5)
