@@ -11,6 +11,7 @@ streamlit-extras>=0.3.0
 groq>=0.4.1
 
 # Data processing
+pyyaml>=6.0
 pandas>=2.0.0
 openpyxl>=3.1.0
 xlrd>=2.0.1
