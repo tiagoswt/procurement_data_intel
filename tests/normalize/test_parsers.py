@@ -42,3 +42,51 @@ def test_clean_ean_non_numeric_stripped():
 def test_clean_ean_float_input():
     # pandas may produce a float object
     assert clean_ean(5060280378928.0) == "5060280378928"
+
+
+from normalize.parsers.price import parse_price
+
+
+def test_parse_price_plain_float_string():
+    assert parse_price("29.99") == 29.99
+
+
+def test_parse_price_numeric_float():
+    assert parse_price(29.99) == 29.99
+
+
+def test_parse_price_numeric_int():
+    assert parse_price(30) == 30.0
+
+
+def test_parse_price_comma_decimal_sep():
+    assert parse_price("25,50", decimal_sep=",") == 25.50
+
+
+def test_parse_price_european_thousands():
+    # "1.234,56" with decimal_sep="," → 1234.56
+    assert parse_price("1.234,56", decimal_sep=",") == 1234.56
+
+
+def test_parse_price_currency_symbol():
+    assert parse_price("€29.99") == 29.99
+
+
+def test_parse_price_zero_returns_none():
+    assert parse_price("0") is None
+
+
+def test_parse_price_zero_float_returns_none():
+    assert parse_price(0.0) is None
+
+
+def test_parse_price_none_returns_none():
+    assert parse_price(None) is None
+
+
+def test_parse_price_empty_string_returns_none():
+    assert parse_price("") is None
+
+
+def test_parse_price_negative_returns_none():
+    assert parse_price("-5.00") is None
