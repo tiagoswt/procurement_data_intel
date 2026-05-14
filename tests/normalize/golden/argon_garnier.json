@@ -1,0 +1,1759 @@
+[
+  {
+    "ean_code": "3600542562591",
+    "product_name": "Garnier Body Repair Restoring Body Milk 400ml",
+    "price": 4.08,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542561389",
+    "product_name": "Garnier Body Repair Restoring Hand Cream 75ml",
+    "price": 2.7,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542503129",
+    "product_name": "Garnier Ultra Doux Kids Delicatesse Oat Milk 2 in 1 Shampoo 250ml",
+    "price": 2.2,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542503136",
+    "product_name": "Garnier Ultra Doux Kids Apricot 2 in 1 Shampoo 250ml",
+    "price": 2.2,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542096065",
+    "product_name": "Garnier Ultra Doux Honey Treasures Conditioner 200ml",
+    "price": 1.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542096386",
+    "product_name": "Garnier Ultra Doux Castor Oil & Almond Conditioner 200ml",
+    "price": 1.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542479868",
+    "product_name": "Garnier Ultra Doux Delicatesse Oat Milk Conditioner 200ml",
+    "price": 1.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542521017",
+    "product_name": "Garnier Ultra Doux Charcoal Purifying Conditioner 200ml",
+    "price": 1.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542572248",
+    "product_name": "Garnier Ultra Doux Rice Water Strengthening Conditioner 200ml",
+    "price": 1.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542095983",
+    "product_name": "Garnier Ultra Doux 5 Plants Revitalizing Shampoo 400ml",
+    "price": 2.32,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542096188",
+    "product_name": "Garnier Ultra Doux Honey Treasures Shampoo 400ml",
+    "price": 2.32,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542096348",
+    "product_name": "Garnier Ultra Doux Castor Oil & Almond Shampoo 400ml",
+    "price": 2.32,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542479943",
+    "product_name": "Garnier Ultra Doux Delicatesse Oat Milk Shampoo 400ml",
+    "price": 2.32,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542521031",
+    "product_name": "Garnier Ultra Doux Charcoal Purifying Shampoo 400ml",
+    "price": 2.32,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542572002",
+    "product_name": "Garnier Ultra Doux Rice Water Strengthening Shampoo 400ml",
+    "price": 2.32,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542524193",
+    "product_name": "Garnier Ultra Doux Maple & Castor Oil Repairing Mask 340ml",
+    "price": 3.26,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542524209",
+    "product_name": "Garnier Ultra Doux Delicatesse Oat Milk Mask 340ml",
+    "price": 3.26,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542524216",
+    "product_name": "Garnier Ultra Doux Honey Treasures Repairing Mask 340ml",
+    "price": 3.26,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542524612",
+    "product_name": "Garnier Ultra Doux Charcoal Purifying Mask 340ml",
+    "price": 3.26,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542571630",
+    "product_name": "Garnier Ultra Doux Rice Water Strengthening Mask 340ml",
+    "price": 3.26,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600540179609",
+    "product_name": "Garnier Color Naturals 1 Black",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600540179616",
+    "product_name": "Garnier Color Naturals 3 Dark Chestnut Brown",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600540179623",
+    "product_name": "Garnier Color Naturals 4 Chestnut Brown",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600540179630",
+    "product_name": "Garnier Color Naturals 5 Light Brown",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600540179647",
+    "product_name": "Garnier Color Naturals 6 Dark Blonde",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600540179654",
+    "product_name": "Garnier Color Naturals 7 Blonde",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600540179661",
+    "product_name": "Garnier Color Naturals 8 Light Blonde",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600540179685",
+    "product_name": "Garnier Color Naturals 10 Very Light Blonde",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600540179777",
+    "product_name": "Garnier Color Naturals 4.3 Golden Brown",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600540179906",
+    "product_name": "Garnier Color Naturals 111 Extra Light Ash Blonde",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600540387363",
+    "product_name": "Garnier Color Naturals E0 Lightening Cream",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541091863",
+    "product_name": "Garnier Color Naturals 4.15 Frosty Dark Mahogany",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541091870",
+    "product_name": "Garnier Color Naturals 5.25 Light Opal Mahogany Brown",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541216341",
+    "product_name": "Garnier Color Naturals 9 Extra Light Blonde",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541216396",
+    "product_name": "Garnier Color Naturals 2.10 Blueberry Black",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541216495",
+    "product_name": "Garnier Color Naturals 8.1 Natural Light Ash Blonde",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541264380",
+    "product_name": "Garnier Color Naturals 6.41 Sweet Amber",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541264434",
+    "product_name": "Garnier Color Naturals 7.40 Copper Passion",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541548756",
+    "product_name": "Garnier Color Naturals 5.15 Creamy Coffee",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541678699",
+    "product_name": "Garnier Color Naturals 3.23 Dark Quartz",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542213905",
+    "product_name": "Garnier Color Naturals 4.62 Sweet Cherry",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542334921",
+    "product_name": "Garnier Color Naturals 3.12 Icy Dark Brown",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542335324",
+    "product_name": "Garnier Color Naturals 4.12 Ice Brown",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542335720",
+    "product_name": "Garnier Color Naturals 5.12 Icy Light Brown",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542362276",
+    "product_name": "Garnier Color Naturals 1.10 Jet Black",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542388542",
+    "product_name": "Garnier Color Naturals 2.0 Soft Black",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542423939",
+    "product_name": "Garnier Color Naturals 110 Extra Light Ultra Blonde",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542423946",
+    "product_name": "Garnier Color Naturals 112 Extra Light Natural Blonde",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542482790",
+    "product_name": "Garnier Color Naturals 7.34 Natural Copper",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542600125",
+    "product_name": "Garnier Color Naturals 4.5 Mahogany",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542600200",
+    "product_name": "Garnier Color Naturals 8.13 Natural Light Beige Blonde",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542600286",
+    "product_name": "Garnier Color Naturals 7.3 Natural Golden Blonde",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542600361",
+    "product_name": "Garnier Color Naturals 5.34 Golden Mahogany Brown",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542601474",
+    "product_name": "Garnier Color Naturals 9N Nude Extra Blonde",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542649667",
+    "product_name": "Garnier Color Naturals 102+ Frosty Silver",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542649674",
+    "product_name": "Garnier Color Naturals 101+ Platinum Ice",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541216440",
+    "product_name": "Garnier Color Naturals 7.1 Natural Ash Blonde",
+    "price": 2.43,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541136717",
+    "product_name": "Garnier Color Sensation 1.0 Onyx Black Permanent Hair Color",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541136731",
+    "product_name": "Garnier Color Sensation 3.0 Prestige Brown Permanent Hair Color",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541136748",
+    "product_name": "Garnier Color Sensation 3.16 Amethyst Purple Permanent Hair Color",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541136755",
+    "product_name": "Garnier Color Sensation 4.0 Deep Brown Permanent Hair Color",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541136762",
+    "product_name": "Garnier Color Sensation 4.15 Icy Chestnut Permanent Hair Color",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541136779",
+    "product_name": "Garnier Color Sensation 4.60 Red Brown Permanent Hair Color",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541136809",
+    "product_name": "Garnier Color Sensation 6.0 Dark Blonde Permanent Hair Color",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541136816",
+    "product_name": "Garnier Color Sensation 6.35 Chic Brown Permanent Hair Color",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541136847",
+    "product_name": "Garnier Color Sensation 7.0 Opal Blonde Permanent Hair Color",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541136854",
+    "product_name": "Garnier Color Sensation 8.0 Light Blonde Permanent Hair Color",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541136861",
+    "product_name": "Garnier Color Sensation 9.13 Beige Blonde Permanent Hair Color",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541136878",
+    "product_name": "Garnier Color Sensation 110 Diamond Ultra Light Blonde",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541136892",
+    "product_name": "Garnier Color Sensation 111 Silver Ultra Light Blonde",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541914049",
+    "product_name": "Garnier Color Sensation S9 Silver Platinum",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541975279",
+    "product_name": "Garnier Color Sensation 7.40 Amber Light Copper",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542259149",
+    "product_name": "Garnier Color Sensation Marble Stone S11 Ultra Silver",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542482721",
+    "product_name": "Garnier Color Sensation 8.11 Pearl Blonde",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542601740",
+    "product_name": "Garnier Color Sensation 6.60 Intense Ruby Red",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542601757",
+    "product_name": "Garnier Color Sensation 10.21 Delicate Light Blonde",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542601771",
+    "product_name": "Garnier Color Sensation 4.12 Precious Deep Brown",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542601788",
+    "product_name": "Garnier Color Sensation Marble Stone S1 Platinum Blonde",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542613668",
+    "product_name": "Garnier Color Sensation Kit 5.0 Luminous Light Brown",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542613675",
+    "product_name": "Garnier Color Sensation 2.0 Ebony Black",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542613705",
+    "product_name": "Garnier Color Sensation 8.12 Opal Mauve Blonde",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542649636",
+    "product_name": "Garnier Color Sensation Highlight 8.31 Brown",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542649643",
+    "product_name": "Garnier Color Sensation Highlight 7.31 Dark Brown",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542649650",
+    "product_name": "Garnier Color Sensation Highlight 6.31 Black",
+    "price": 3.21,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542399333",
+    "product_name": "Garnier Mineral UltraCare RollOn Deodorant 50ml",
+    "price": 2.08,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475112",
+    "product_name": "Garnier Mineral Action Control RollOn Deodorant 50ml",
+    "price": 2.08,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475136",
+    "product_name": "Garnier Mineral BWC RollOn Deodorant 50ml",
+    "price": 2.08,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475167",
+    "product_name": "Garnier Mineral BWC2 RollOn Deodorant 50ml",
+    "price": 2.08,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475174",
+    "product_name": "Garnier Mineral Thermo Protect RollOn Deodorant 50ml",
+    "price": 2.08,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475198",
+    "product_name": "Garnier Mineral Pure Active RollOn Deodorant 50ml",
+    "price": 2.08,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475211",
+    "product_name": "Garnier Mineral Floral Fresh RollOn Deodorant 50ml",
+    "price": 2.08,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475235",
+    "product_name": "Garnier Mineral Clinical Protection RollOn 50ml",
+    "price": 2.08,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475266",
+    "product_name": "Garnier Mineral Magnesium Ultra Dry RollOn 50ml",
+    "price": 2.08,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475273",
+    "product_name": "Garnier Mineral Cotton Clean BWC3 RollOn 50ml",
+    "price": 2.08,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542399296",
+    "product_name": "Garnier Mineral UltraCare Antiperspirant Spray 150ml",
+    "price": 2.53,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542471053",
+    "product_name": "Garnier Mineral Action Control Antiperspirant Spray 150ml",
+    "price": 2.53,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542471077",
+    "product_name": "Garnier Mineral BWC Antiperspirant Spray 150ml",
+    "price": 2.53,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542471114",
+    "product_name": "Garnier Mineral Invisible BWC2 Antiperspirant Spray 150ml",
+    "price": 2.53,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475020",
+    "product_name": "Garnier Mineral Floral Fresh Antiperspirant Spray 150ml",
+    "price": 2.53,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475044",
+    "product_name": "Garnier Mineral Clinical Protection Antiperspirant Spray 150ml",
+    "price": 2.53,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475075",
+    "product_name": "Garnier Mineral Magnesium Ultra Dry Antiperspirant Spray 150ml",
+    "price": 2.53,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475082",
+    "product_name": "Garnier Mineral Cotton Clean BWC3 Antiperspirant Spray 150ml",
+    "price": 2.53,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475099",
+    "product_name": "Garnier Mineral Thermo Protect Antiperspirant Spray 150ml",
+    "price": 2.53,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475129",
+    "product_name": "Garnier Mineral Extreme Protection RollOn 50ml",
+    "price": 2.16,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475143",
+    "product_name": "Garnier Mineral X Tra Time RollOn 50ml",
+    "price": 2.16,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475150",
+    "product_name": "Garnier Mineral BWC RollOn 50ml",
+    "price": 2.16,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475242",
+    "product_name": "Garnier Mineral Clinical Protection RollOn 50ml",
+    "price": 2.16,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475259",
+    "product_name": "Garnier Mineral Magnesium Ultra Dry RollOn 50ml",
+    "price": 2.16,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542471091",
+    "product_name": "Garnier Mineral BWC Antiperspirant Spray 150ml",
+    "price": 2.39,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542471060",
+    "product_name": "Garnier Mineral Extreme Protection Antiperspirant Spray 150ml",
+    "price": 2.39,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542475051",
+    "product_name": "Garnier Mineral Clinical Protection Antiperspirant Spray 150ml",
+    "price": 2.39,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542553001",
+    "product_name": "Garnier Fructis Super Dose Damage Repair Treatment 150ml",
+    "price": 4.05,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542043236",
+    "product_name": "Garnier Fructis Nourishing Repair Butter Conditioner 200ml",
+    "price": 2.04,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542061315",
+    "product_name": "Garnier Fructis Damage Rewind Conditioner 200ml",
+    "price": 2.04,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542061353",
+    "product_name": "Garnier Fructis Color Resist Goji Conditioner 200ml",
+    "price": 2.04,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542061438",
+    "product_name": "Garnier Fructis Grow Strong Conditioner 200ml",
+    "price": 2.04,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542061476",
+    "product_name": "Garnier Fructis Nourishing Repair Conditioner 200ml",
+    "price": 2.04,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542134842",
+    "product_name": "Garnier Fructis Aloe Hydrating Conditioner 200ml",
+    "price": 2.04,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542225373",
+    "product_name": "Garnier Fructis Damage Rewind 10 in 1 Leave In Treatment 400ml",
+    "price": 2.8,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542408264",
+    "product_name": "Garnier Fructis Grow Strong 10 in 1 Leave In Treatment 400ml",
+    "price": 2.8,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542500395",
+    "product_name": "Garnier Fructis Hair Food Pineapple Mask 400ml",
+    "price": 3.85,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542513012",
+    "product_name": "Garnier Fructis Hair Food Aloe Hydrating Mask 400ml",
+    "price": 3.85,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542513029",
+    "product_name": "Garnier Fructis Hair Food Banana Nourishing Mask 400ml",
+    "price": 3.85,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542513036",
+    "product_name": "Garnier Fructis Hair Food Papaya Repairing Mask 400ml",
+    "price": 3.85,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542513043",
+    "product_name": "Garnier Fructis Hair Food Cocoa Butter Smoothing Mask 400ml",
+    "price": 3.85,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542513050",
+    "product_name": "Garnier Fructis Hair Food Macadamia Smoothing Mask 400ml",
+    "price": 3.85,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542517843",
+    "product_name": "Garnier Fructis Hair Food Watermelon Volume Mask 400ml",
+    "price": 3.85,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542659574",
+    "product_name": "Garnier Fructis Hair Food Kiwi Shine Mask 400ml",
+    "price": 3.85,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542290029",
+    "product_name": "Garnier Fructis Hair Food Papaya Repairing Shampoo 350ml",
+    "price": 3.17,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542290036",
+    "product_name": "Garnier Fructis Hair Food Aloe Hydrating Shampoo 350ml",
+    "price": 3.17,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542290067",
+    "product_name": "Garnier Fructis Hair Food Banana Nourishing Shampoo 350ml",
+    "price": 3.17,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542389105",
+    "product_name": "Garnier Fructis Hair Food Watermelon Volume Shampoo 350ml",
+    "price": 3.17,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542432542",
+    "product_name": "Garnier Fructis Hair Food Cocoa Butter Smoothing Conditioner 350ml",
+    "price": 3.17,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542432689",
+    "product_name": "Garnier Fructis Hair Food Cocoa Butter Smoothing Shampoo 350ml",
+    "price": 3.17,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542514187",
+    "product_name": "Garnier Fructis Hair Food Pineapple Shine Shampoo 350ml",
+    "price": 3.17,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542542647",
+    "product_name": "Garnier Fructis Damage Eraser Repairing Mask 320ml",
+    "price": 3.51,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542543187",
+    "product_name": "Garnier Fructis Grow Strong Fiber Mask 320ml",
+    "price": 3.51,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542060752",
+    "product_name": "Garnier Fructis Color Resist Goji Shampoo 250ml",
+    "price": 2.08,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542060837",
+    "product_name": "Garnier Fructis Damage Rewind Shampoo 250ml",
+    "price": 2.08,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541970519",
+    "product_name": "Garnier Fructis Pure Strong Anti Pollution Shampoo 400ml",
+    "price": 2.34,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541970816",
+    "product_name": "Garnier Fructis Pure Strong Fresh Shampoo 400ml",
+    "price": 2.34,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542043267",
+    "product_name": "Garnier Fructis Nourishing Repair Butter Shampoo 400ml",
+    "price": 2.34,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542060790",
+    "product_name": "Garnier Fructis Color Resist Goji Shampoo 400ml",
+    "price": 2.34,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542060875",
+    "product_name": "Garnier Fructis Damage Rewind Shampoo 400ml",
+    "price": 2.34,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542061032",
+    "product_name": "Garnier Fructis Grow Strong Shampoo 400ml",
+    "price": 2.34,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542061193",
+    "product_name": "Garnier Fructis Cherry Normal 2 in 1 Shampoo 400ml",
+    "price": 2.34,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542061278",
+    "product_name": "Garnier Fructis Apple Fresh 2 in 1 Shampoo 400ml",
+    "price": 2.34,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542134798",
+    "product_name": "Garnier Fructis Aloe Hydrating Shampoo 400ml",
+    "price": 2.34,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542479295",
+    "product_name": "Garnier Fructis Grow Strong Orange Shampoo 400ml",
+    "price": 2.34,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541920194",
+    "product_name": "Garnier Olia Max Bleach B+++ Lightening Kit",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576789",
+    "product_name": "Garnier Olia 4.0 Dark Brown Permanent Hair Color",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576796",
+    "product_name": "Garnier Olia 4.15 Iced Chocolate Permanent Hair Color",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576802",
+    "product_name": "Garnier Olia 6.0 Light Brown Permanent Hair Color",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576819",
+    "product_name": "Garnier Olia 5.0 Brown Permanent Hair Color",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576826",
+    "product_name": "Garnier Olia 9.0 Light Blonde Permanent Hair Color",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576833",
+    "product_name": "Garnier Olia 9G Light Greige Permanent Hair Color",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576840",
+    "product_name": "Garnier Olia 8.0 Blonde Permanent Hair Color",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576857",
+    "product_name": "Garnier Olia 10.1 Ashy Very Light Blonde",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576864",
+    "product_name": "Garnier Olia 5.35 Chocolate Light Brown",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576871",
+    "product_name": "Garnier Olia 7.40 Intense Copper",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576888",
+    "product_name": "Garnier Olia 10.0 Very Light Blonde",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576895",
+    "product_name": "Garnier Olia 7.13 Beige Dark Blonde",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576901",
+    "product_name": "Garnier Olia 3.0 Soft Black",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576918",
+    "product_name": "Garnier Olia 1.0 Night Black",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576925",
+    "product_name": "Garnier Olia 6.60 Intense Red",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576932",
+    "product_name": "Garnier Olia 110 Super Lightener",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576949",
+    "product_name": "Garnier Olia 6.35 Light Chocolate",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576956",
+    "product_name": "Garnier Olia 8.31 Golden Ashy Blonde",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576963",
+    "product_name": "Garnier Olia 8.43 Intense Light Gold Copper",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576970",
+    "product_name": "Garnier Olia 7.0 Dark Blonde",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576987",
+    "product_name": "Garnier Olia 5.15 Frozen Brown",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542576994",
+    "product_name": "Garnier Olia 9.11 Silver Smoke",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542577007",
+    "product_name": "Garnier Olia 7.3 Golden Dark Blonde",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542577014",
+    "product_name": "Garnier Olia 4.12 Dark Brown",
+    "price": 3.88,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542658935",
+    "product_name": "Garnier Olia Smoky Brown Toning Treatment 150ml",
+    "price": 4.31,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542658942",
+    "product_name": "Garnier Olia Maple Brown Toning Treatment 150ml",
+    "price": 4.31,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542658959",
+    "product_name": "Garnier Olia Sun Kissed Brown Toning Treatment 150ml",
+    "price": 4.31,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542658966",
+    "product_name": "Garnier Olia Icy Blonde Toning Treatment 150ml",
+    "price": 4.31,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542573924",
+    "product_name": "Garnier Olia Toner 10.01 After Bleach Platinum Blonde",
+    "price": 4.58,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542574044",
+    "product_name": "Garnier Olia Toner 10.2 After Bleach Pearl Blonde",
+    "price": 4.58,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542574280",
+    "product_name": "Garnier Olia Toner 9.1 After Lightener Cool Blonde",
+    "price": 4.58,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542328685",
+    "product_name": "Garnier SkinActive Natural Aloe & Hyaluronic Foaming Gel 200ml",
+    "price": 2.1,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542367851",
+    "product_name": "Garnier SkinActive Natural Aloe & Hyaluronic Toner 200ml",
+    "price": 2.1,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542045544",
+    "product_name": "Garnier SkinActive Natural Rose Moisturizing Cream 50ml",
+    "price": 2.27,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542488051",
+    "product_name": "Garnier Pure Active Deep Cleansing Foam 250ml",
+    "price": 5.06,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542566254",
+    "product_name": "Garnier Pure Active Charcoal Gel Wash 250ml",
+    "price": 5.06,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542586092",
+    "product_name": "Garnier Vitamin C Brightening Gel Cleanser 250ml",
+    "price": 5.06,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542232029",
+    "product_name": "Garnier SkinActive Natural Aloe 3in1 Moisturizer 50ml",
+    "price": 3.51,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542328487",
+    "product_name": "Garnier SkinActive Aloe Hyaluron Moisturizer 50ml",
+    "price": 3.51,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542572859",
+    "product_name": "Garnier SkinActive Air Cream Charcoal 50ml",
+    "price": 4.58,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542471022",
+    "product_name": "Garnier SkinActive Vitamin C Jelly Cream 50ml",
+    "price": 3.51,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542572910",
+    "product_name": "Garnier SkinActive Invisible UV Fluid SPF50 40ml",
+    "price": 7.7,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542597869",
+    "product_name": "Garnier Pure Active BHA + Niacinamide UV Fluid SPF50+ 40ml",
+    "price": 7.7,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542633604",
+    "product_name": "Garnier Hyaluron UV Fluid SPF50+ 40ml",
+    "price": 7.7,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542573016",
+    "product_name": "Garnier Vitamin C Tinted Serum SPF50 40ml",
+    "price": 8.06,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542415033",
+    "product_name": "Garnier BB Cream Oil Free Medium 50ml",
+    "price": 3.94,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542415156",
+    "product_name": "Garnier BB Cream Oil Free Light 50ml",
+    "price": 3.94,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542416412",
+    "product_name": "Garnier BB Cream Classic Medium 50ml",
+    "price": 3.94,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542416443",
+    "product_name": "Garnier BB Cream Classic Light 50ml",
+    "price": 3.94,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542628525",
+    "product_name": "Garnier Hyaluron Liquid Hydrating Serum 120ml",
+    "price": 3.69,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542628624",
+    "product_name": "Garnier Pure Active Salicylic Exfoliating Liquid Care 120ml",
+    "price": 5.39,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542628433",
+    "product_name": "Garnier Vitamin C Liquid Brightening Serum 120ml",
+    "price": 3.69,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542456616",
+    "product_name": "Garnier Express Eye Makeup Remover 125ml",
+    "price": 2.56,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542468435",
+    "product_name": "Garnier Vitamin C Micellar Gel Wash 200ml",
+    "price": 1.62,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541380066",
+    "product_name": "Garnier Micellar Water Expert 400ml",
+    "price": 2.73,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541595156",
+    "product_name": "Garnier Micellar Water Sensitive Skin 400ml",
+    "price": 2.73,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542661737",
+    "product_name": "Garnier Micellar Water Salicylic Acid 400ml",
+    "price": 2.73,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541744561",
+    "product_name": "Garnier Micellar Water Ultra Clean 400ml",
+    "price": 3.24,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542098151",
+    "product_name": "Garnier Natural Micellar Water Cornflower 400ml",
+    "price": 3.24,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542326773",
+    "product_name": "Garnier Micellar Water Rose 400ml",
+    "price": 3.24,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542396578",
+    "product_name": "Garnier Micellar Water Aloe 400ml",
+    "price": 3.24,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542467643",
+    "product_name": "Garnier Micellar Water Vitamin C 400ml",
+    "price": 3.24,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542081368",
+    "product_name": "Garnier Natural Micellar Cleansing Solution 100ml",
+    "price": 1.56,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542109871",
+    "product_name": "Garnier Natural Infused Micellar Water 100ml",
+    "price": 1.69,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600010018209",
+    "product_name": "Garnier Pure Gel Nettoyant Quotidien 200ml",
+    "price": 2.68,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600010018278",
+    "product_name": "Garnier Pure Astringent Lotion 200ml",
+    "price": 2.68,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542573146",
+    "product_name": "Garnier Pure Active Pimple Patches 22pcs",
+    "price": 4.57,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542154666",
+    "product_name": "Garnier Pure Active Charcoal Nose Strips",
+    "price": 4.05,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600540565242",
+    "product_name": "Garnier SkinActive Pure Cleanser 3in1 150ml",
+    "price": 3.01,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542084413",
+    "product_name": "Garnier Pure Active Volcanic Mask 150ml",
+    "price": 3.01,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600541595163",
+    "product_name": "Garnier SkinActive Pure Micellar Water 400ml",
+    "price": 3.31,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542432931",
+    "product_name": "Garnier SkinActive Aloe Hyaluron Serum 30ml",
+    "price": 7.55,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542497930",
+    "product_name": "Garnier Pure Active Anti Blemish Serum 30ml",
+    "price": 7.55,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542483612",
+    "product_name": "Garnier Vitamin C Brightening Serum 30ml",
+    "price": 7.55,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542670678",
+    "product_name": "Garnier Hyaluron Sorbet Cream 85ml",
+    "price": 3.51,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542670661",
+    "product_name": "Garnier Salicylic Sorbet Cream 85ml",
+    "price": 3.51,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542670654",
+    "product_name": "Garnier Vitamin C Sorbet Cream 85ml",
+    "price": 3.51,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542658393",
+    "product_name": "Garnier Vitamin C Tinted Eye Cream 40ml",
+    "price": 9.44,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542097253",
+    "product_name": "Garnier SkinActive Charcoal Algae Sheet Mask",
+    "price": 2.11,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542319768",
+    "product_name": "Garnier Tissue Mask Coconut Energizing",
+    "price": 2.11,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542368896",
+    "product_name": "Garnier Pure Active Tea Tree Tissue Mask",
+    "price": 2.11,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542380492",
+    "product_name": "Garnier Vitamin C Tissue Mask",
+    "price": 2.11,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542385312",
+    "product_name": "Garnier Tissue Mask Pomegranate",
+    "price": 2.11,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542385329",
+    "product_name": "Garnier Tissue Mask Green Tea",
+    "price": 2.11,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542385336",
+    "product_name": "Garnier Tissue Mask Camomile",
+    "price": 2.11,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542385619",
+    "product_name": "Garnier Tissue Mask Ultra Lift",
+    "price": 2.11,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542385626",
+    "product_name": "Garnier Tissue Mask Aloe",
+    "price": 2.11,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542385657",
+    "product_name": "Garnier Tissue Mask Night Repair",
+    "price": 2.11,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542461696",
+    "product_name": "Garnier Probiotic Face Tissue Mask",
+    "price": 2.11,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542500517",
+    "product_name": "Garnier Cryo Jelly Eye Mask 5g",
+    "price": 2.03,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542500586",
+    "product_name": "Garnier Cryo Jelly Face Mask 27g",
+    "price": 2.83,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542545259",
+    "product_name": "Garnier DermBar Pro Retinol Tissue Mask 22g",
+    "price": 2.83,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542154840",
+    "product_name": "Garnier Eye Tissue Mask Orange Juice",
+    "price": 1.16,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542413619",
+    "product_name": "Garnier Lip Mask Cherry 5g",
+    "price": 1.16,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542461740",
+    "product_name": "Garnier Probiotic Eye Tissue Mask 6g",
+    "price": 1.16,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542569026",
+    "product_name": "Garnier Caffeine Eye Tissue Mask 5g",
+    "price": 1.16,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542569040",
+    "product_name": "Garnier Vitamin C Eye Tissue Mask 5g",
+    "price": 1.16,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542626729",
+    "product_name": "Garnier UV Mist SPF50 75ml",
+    "price": 7.68,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542453097",
+    "product_name": "Garnier Bio Vitamin C Day Cream 50ml",
+    "price": 4.31,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542514156",
+    "product_name": "Garnier Vitamin C Brightening Eye Cream 15ml",
+    "price": 6.02,
+    "supplier": "Argon Trading",
+    "quantity": null
+  },
+  {
+    "ean_code": "3600542541640",
+    "product_name": "Garnier Vitamin C Night Serum 30ml",
+    "price": 7.56,
+    "supplier": "Argon Trading",
+    "quantity": null
+  }
+]

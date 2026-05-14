@@ -34,3 +34,30 @@ def test_oferta_drogueria(generate_golden):
         save_golden("oferta_drogueria", actual)
         return
     assert actual == load_golden("oferta_drogueria")
+
+
+def test_argon_garnier(generate_golden):
+    products, warnings = ingest(str(DATA_DIR / "Garnier - Argon Trading (1).xlsx"))
+    actual = [product_to_dict(p) for p in products]
+    if generate_golden:
+        save_golden("argon_garnier", actual)
+        return
+    assert actual == load_golden("argon_garnier")
+
+
+def test_argon_estee_lauder(generate_golden):
+    products, warnings = ingest(str(DATA_DIR / "Estee Lauder - Argon Trading  .xlsx"))
+    actual = [product_to_dict(p) for p in products]
+    if generate_golden:
+        save_golden("argon_estee_lauder", actual)
+        return
+    assert actual == load_golden("argon_estee_lauder")
+
+
+def test_argon_johnsons(generate_golden):
+    products, warnings = ingest(str(DATA_DIR / "Johnson's Baby - Argon Trading (1).xlsx"))
+    actual = [product_to_dict(p) for p in products]
+    if generate_golden:
+        save_golden("argon_johnsons", actual)
+        return
+    assert actual == load_golden("argon_johnsons")

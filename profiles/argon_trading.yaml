@@ -1,0 +1,31 @@
+supplier_code: argon_trading
+supplier_name: "Argon Trading"
+
+match:
+  filename_patterns:
+    - "*Argon Trading*"
+    - "*- Argon Trading*"
+
+brand_source: filename_regex
+brand_regex: "^(?P<brand>.+?) - Argon Trading"
+
+defaults:
+  currency: EUR
+
+sheets:
+  - match: "Garnier"
+    header_row: 1
+    decimal_sep: "."
+    columns:
+      ean:          "EAN"
+      product_name: "Product Name"
+      price:        "Price"
+      quantity:     ~
+  - match: "*"
+    header_row: 1
+    decimal_sep: "."
+    columns:
+      ean:          "EAN"
+      product_name: "Description"
+      price:        "PRICE"
+      quantity:     ~
