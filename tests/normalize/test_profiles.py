@@ -61,3 +61,12 @@ def test_argon_johnsons(generate_golden):
         save_golden("argon_johnsons", actual)
         return
     assert actual == load_golden("argon_johnsons")
+
+
+def test_kbeauty_eu(generate_golden):
+    products, warnings = ingest(str(DATA_DIR / "K-Beauty offer_EU DDP_Mar. 2026.xlsx"))
+    actual = [product_to_dict(p) for p in products]
+    if generate_golden:
+        save_golden("kbeauty_eu", actual)
+        return
+    assert actual == load_golden("kbeauty_eu")

@@ -48,7 +48,8 @@ def ingest(file_path: str) -> Tuple[List[ProductData], List[str]]:
     if not all_products:
         raise NormalizeError(f"No valid rows extracted from {fp.name}")
 
-    if total_input_rows > 0 and len(all_products) / total_input_rows < 0.5:
+    min_yield = profile.get("min_yield", 0.5)
+    if total_input_rows > 0 and len(all_products) / total_input_rows < min_yield:
         raise NormalizeError(
             f"Low yield: {len(all_products)}/{total_input_rows} rows valid in {fp.name}. "
             "Check that profile column names match the file headers."

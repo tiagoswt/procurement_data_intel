@@ -1,0 +1,24 @@
+supplier_code: kbeauty_eu
+supplier_name: "K-Beauty EU"
+
+match:
+  filename_patterns:
+    - "*K-Beauty*"
+    - "*K Beauty*"
+
+brand_source: sheet_name
+
+min_yield: 0.05
+
+defaults:
+  currency: EUR
+
+sheets:
+  - match: "*"
+    header_row: 2
+    decimal_sep: "."
+    columns:
+      ean:          "Barcode"
+      product_name: "Product Name(EN)"
+      price:        "Supply Price (excl.vat)"
+      quantity:     ~
