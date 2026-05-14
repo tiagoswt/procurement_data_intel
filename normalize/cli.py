@@ -30,7 +30,21 @@ def main():
         sys.exit(1)
 
     print(f"Extracted {len(products)} products, {len(warnings)} warnings")
-    for w in warnings:
+
+    zero_yield = [w for w in warnings if w.startswith("[ZERO YIELD]")]
+    other_warnings = [w for w in warnings if not w.startswith("[ZERO YIELD]") and not w.startswith("[SKIP SUMMARY]")]
+    skip_summaries = [w for w in warnings if w.startswith("[SKIP SUMMARY]")]
+
+    if zero_yield:
+        print(f"  !! {len(zero_yield)} sheet(s) produced 0 products:")
+        for w in zero_yield:
+            print(f"     {w}")
+
+    if skip_summaries:
+        for w in skip_summaries:
+            print(f"  >> {w}")
+
+    for w in other_warnings:
         print(f"  WARN: {w}")
 
     if dry_run:
