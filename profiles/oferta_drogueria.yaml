@@ -1,0 +1,25 @@
+supplier_code: oferta_drogueria
+supplier_name: "Droguería"
+
+match:
+  filename_patterns:
+    - "*DROGUERIA*"
+    - "*drogueria*"
+    - "*OFERTA_DROGUERIA*"
+
+brand_source: column_regex
+brand_column: "Producto"
+brand_regex: "^(?P<brand>[A-ZÁÉÍÓÚa-záéíóú][A-ZÁÉÍÓÚa-záéíóú0-9 \\-]+?)\\s"
+
+defaults:
+  currency: EUR
+
+sheets:
+  - match: "*"
+    header_row: 1
+    decimal_sep: ","
+    columns:
+      ean:          "EAN"
+      product_name: "Producto"
+      price:        "Precio"
+      quantity:     ~
