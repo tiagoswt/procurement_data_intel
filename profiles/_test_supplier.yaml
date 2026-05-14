@@ -1,0 +1,19 @@
+supplier_code: _test_supplier
+supplier_name: "Test Supplier"
+match:
+  filename_patterns:
+    - "*test_offer*"
+    - "*TestCo*"
+brand_source: static
+brand_static: "Test Brand"
+defaults:
+  currency: EUR
+sheets:
+  - match: "*"
+    header_row: 1
+    decimal_sep: "."
+    columns:
+      ean: "EAN"
+      product_name: "Name"
+      price: "Price"
+      quantity: ~
