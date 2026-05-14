@@ -28,6 +28,10 @@ def product_to_dict(p: ProductData) -> dict:
 
 def load_golden(name: str) -> list:
     path = Path(__file__).parent / "golden" / f"{name}.json"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Golden file not found: {path}. Run with --generate-golden to create it."
+        )
     return json.loads(path.read_text(encoding="utf-8"))
 
 
