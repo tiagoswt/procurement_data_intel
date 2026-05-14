@@ -1,0 +1,23 @@
+supplier_code: colorwow
+supplier_name: "Color Wow"
+
+match:
+  filename_patterns:
+    - "*ColorWow*"
+    - "*Color Wow*"
+
+brand_source: static
+brand_static: "Color Wow"
+
+defaults:
+  currency: EUR
+
+sheets:
+  - match: "*"
+    header_row: 1
+    decimal_sep: "."
+    columns:
+      ean:          "EAN"
+      product_name: "DESCRIPTION"
+      price:        "PRICE"
+      quantity:     ~
