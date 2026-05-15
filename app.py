@@ -33,7 +33,7 @@ from tabs.opportunities_tab import opportunities_tab
 from db.database import ProcurementDB
 from tabs.marketing_campaign_tab import marketing_campaign_tab
 from tabs.analytics_tab import analytics_tab
-from models import FieldMapping, ProductData
+from models import FieldMapping, ProductData, ProcessingResult
 from normalize import NormalizeError, ingest
 from normalize.detect import detect_supplier
 from processor import ProcurementProcessor
@@ -673,58 +673,69 @@ def process_manual_supplier_files(
             else:
                 supplier_name = extract_supplier_name(Path(uploaded_file.name).stem)
 
-            # Process the file
+            # Process the file — try profile-based first, fall back to AI detection
             with st.spinner(f"Processing {uploaded_file.name}..."):
-                result = processor.process_uploaded_file(
-                    uploaded_file,
-                    supplier_name=supplier_name,
-                    manual_mapping=(
-                        None if auto_detect_fields else None
-                    ),  # TODO: Add manual mapping UI
+                import time
+                t0 = time.time()
+                products, warnings, processing_mode = _ingest_with_fallback(
+                    uploaded_file, supplier_name, processor
+                )
+                elapsed = time.time() - t0
+
+            if products or processing_mode != "AI detection (failed)":
+                all_products.extend(products)
+                all_results.append(
+                    ProcessingResult(
+                        success=True,
+                        products=products,
+                        errors=[],
+                        processing_time=elapsed,
+                        files_processed=1,
+                        total_products=len(products),
+                    )
                 )
 
-            all_results.append(result)
-
-            if result.success:
-                all_products.extend(result.products)
-
-                # Calculate stats
-                ean_count = sum(1 for p in result.products if p.ean_code)
-                supplier_count = sum(1 for p in result.products if p.supplier_code)
+                ean_count = sum(1 for p in products if p.ean_code)
+                supplier_count = sum(1 for p in products if p.supplier_code)
 
                 st.success(
-                    f"✅ **{uploaded_file.name}**: {result.total_products} products processed "
-                    f"({ean_count} EANs, {supplier_count} supplier codes) in {result.processing_time:.1f}s"
+                    f"✅ **{uploaded_file.name}**: {len(products)} products "
+                    f"({ean_count} EANs, {supplier_count} supplier codes) "
+                    f"— {processing_mode} — {elapsed:.1f}s"
                 )
 
-                # Show sample products
-                if result.products:
+                if warnings:
+                    with st.expander(f"⚠️ Warnings from {uploaded_file.name}"):
+                        for w in warnings:
+                            st.warning(w)
+
+                if products:
                     with st.expander(f"📋 Sample Data from {uploaded_file.name}"):
-                        sample_data = []
-                        for product in result.products[:3]:
-                            sample_data.append(
-                                {
-                                    "Product Code": product.ean_code
-                                    or product.supplier_code
-                                    or "N/A",
-                                    "Product Name": product.product_name or "N/A",
-                                    "Price": (
-                                        f"€{product.price:.2f}"
-                                        if product.price
-                                        else "N/A"
-                                    ),
-                                    "Supplier": product.supplier or "N/A",
-                                }
-                            )
-                        st.dataframe(
-                            pd.DataFrame(sample_data), width='stretch'
-                        )
+                        sample_data = [
+                            {
+                                "Product Code": p.ean_code or p.supplier_code or "N/A",
+                                "Product Name": p.product_name or "N/A",
+                                "Price": f"€{p.price:.2f}" if p.price else "N/A",
+                                "Supplier": p.supplier or "N/A",
+                            }
+                            for p in products[:3]
+                        ]
+                        st.dataframe(pd.DataFrame(sample_data), width='stretch')
 
             else:
+                all_results.append(
+                    ProcessingResult(
+                        success=False,
+                        products=[],
+                        errors=warnings,
+                        processing_time=elapsed,
+                        files_processed=1,
+                        total_products=0,
+                    )
+                )
                 st.error(f"❌ **{uploaded_file.name}**: Processing failed")
-                if result.errors:
-                    for error in result.errors[:3]:  # Show first 3 errors
-                        st.error(f"  • {error}")
+                for msg in warnings[:3]:
+                    st.error(f"  • {msg}")
 
         except Exception as e:
             st.error(f"❌ **{uploaded_file.name}**: Unexpected error - {str(e)}")
