@@ -10,6 +10,7 @@ import json
 import csv
 import time
 import os
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
@@ -33,6 +34,8 @@ from db.database import ProcurementDB
 from tabs.marketing_campaign_tab import marketing_campaign_tab
 from tabs.analytics_tab import analytics_tab
 from models import FieldMapping, ProductData
+from normalize import NormalizeError, ingest
+from normalize.detect import detect_supplier
 from processor import ProcurementProcessor
 from file_processor import FileProcessor
 from field_detector import AIFieldDetector
@@ -47,6 +50,7 @@ from utils import (
     validate_groq_api_key,
     format_file_size,
     get_processing_stats,
+    extract_supplier_name,
 )
 
 # Configure page
@@ -459,6 +463,45 @@ def manual_file_processing_tab(groq_api_key):
     manual_supplier_processing(groq_api_key)
 
 
+def _ingest_with_fallback(
+    uploaded_file,
+    supplier_name: str,
+    processor,
+):
+    """Try profile-based ingest; fall back to legacy processor on NormalizeError.
+
+    Returns (products, warnings, processing_mode_str).
+    """
+    tmp_path = None
+    try:
+        suffix = Path(uploaded_file.name).suffix
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp.write(uploaded_file.getbuffer())
+            tmp_path = tmp.name
+
+        products, warnings = ingest(tmp_path)
+        matched_code = detect_supplier(uploaded_file.name)
+        return products, warnings, f"Profile: {matched_code}"
+
+    except NormalizeError:
+        uploaded_file.seek(0)
+        result = processor.process_uploaded_file(
+            uploaded_file,
+            supplier_name=supplier_name,
+            manual_mapping=None,
+        )
+        if result.success:
+            return result.products, [], "AI detection"
+        return [], result.errors, "AI detection (failed)"
+
+    finally:
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+
+
 def manual_supplier_processing(groq_api_key):
     """Manual supplier catalog processing"""
 
@@ -552,6 +595,23 @@ def manual_supplier_processing(groq_api_key):
         else:
             manual_supplier_name = None
 
+    # Supplier preview — show extracted name and new/existing status per file
+    if uploaded_files:
+        db_preview = ProcurementDB()
+        existing_suppliers = [s.lower() for s in db_preview.get_distinct_suppliers()]
+
+        st.markdown("**📋 Supplier Preview**")
+        for f in uploaded_files:
+            name = manual_supplier_name if manual_supplier_name else extract_supplier_name(Path(f.name).stem)
+            col_a, col_b = st.columns([3, 1])
+            with col_a:
+                st.write(f"📄 `{f.name}` → **{name}**")
+            with col_b:
+                if name.lower() in existing_suppliers:
+                    st.info("✅ Registered")
+                else:
+                    st.success("🆕 New")
+
     # Process files button
     if st.button("🚀 Process Supplier Files", type="primary", key="manual_process_btn"):
         process_manual_supplier_files(
@@ -606,7 +666,7 @@ def process_manual_supplier_files(
             if manual_supplier_name:
                 supplier_name = manual_supplier_name
             else:
-                supplier_name = Path(uploaded_file.name).stem
+                supplier_name = extract_supplier_name(Path(uploaded_file.name).stem)
 
             # Process the file
             with st.spinner(f"Processing {uploaded_file.name}..."):
