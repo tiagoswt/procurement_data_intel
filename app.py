@@ -86,6 +86,9 @@ if "enhanced_order_optimizer" not in st.session_state:
 if "campaign_discount_threshold" not in st.session_state:
     st.session_state.campaign_discount_threshold = 15.0
 
+if "pending_profiles" not in st.session_state:
+    st.session_state.pending_profiles = {}
+
 # =============================================================================
 # PHASE 2: FEATURE FLAGS CONFIGURATION
 # =============================================================================
@@ -701,7 +704,41 @@ def process_manual_supplier_files(
             else:
                 supplier_name = Path(uploaded_file.name).stem
 
-            # Process the file
+            # Files with a known profile process immediately.
+            # Unknown files get a Groq-generated draft queued for review.
+            profile_code = detect_supplier(uploaded_file.name)
+            if profile_code is None:
+                gen_tmp = None
+                try:
+                    with st.spinner(f"Generating profile for {uploaded_file.name}..."):
+                        gen_dir = tempfile.mkdtemp()
+                        gen_tmp = os.path.join(gen_dir, uploaded_file.name)
+                        with open(gen_tmp, "wb") as _f:
+                            _f.write(uploaded_file.getbuffer())
+                        yaml_text = suggest_profile(gen_tmp)
+                    st.session_state.pending_profiles[uploaded_file.name] = {
+                        "yaml_text": yaml_text,
+                        "file_bytes": bytes(uploaded_file.getbuffer()),
+                        "supplier_name": supplier_name,
+                    }
+                    st.info(
+                        f"📝 **{uploaded_file.name}**: No profile found — "
+                        f"review the generated profile below"
+                    )
+                    continue
+                except Exception:
+                    st.warning(
+                        f"⚠️ **{uploaded_file.name}**: Could not generate profile "
+                        f"— falling back to AI detection"
+                    )
+                finally:
+                    if gen_tmp:
+                        try:
+                            os.unlink(gen_tmp)
+                            os.rmdir(os.path.dirname(gen_tmp))
+                        except OSError:
+                            pass
+
             with st.spinner(f"Processing {uploaded_file.name}..."):
                 result = processor.process_uploaded_file(
                     uploaded_file,
