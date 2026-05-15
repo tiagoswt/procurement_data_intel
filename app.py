@@ -48,6 +48,11 @@ from utils import (
     format_file_size,
     get_processing_stats,
 )
+import tempfile
+import yaml as _yaml
+from normalize import NormalizeError, ingest
+from normalize.detect import detect_supplier
+from normalize.wizard import suggest_profile
 
 # Configure page
 st.set_page_config(
@@ -457,6 +462,64 @@ def manual_file_processing_tab(groq_api_key):
 
     # Show supplier catalog processing directly (no sub-tabs needed)
     manual_supplier_processing(groq_api_key)
+
+
+def _handle_profile_accept(
+    filename: str,
+    yaml_text: str,
+    entry: dict,
+    profiles_dir: Path = None,
+) -> None:
+    """Validate and save an accepted YAML draft, then re-ingest the file."""
+    if profiles_dir is None:
+        profiles_dir = Path("profiles")
+
+    try:
+        profile = _yaml.safe_load(yaml_text)
+    except _yaml.YAMLError as e:
+        st.error(f"Invalid YAML — fix before accepting: {e}")
+        return
+
+    supplier_code = profile.get("supplier_code")
+    if not supplier_code:
+        st.error("YAML must have a `supplier_code` field")
+        return
+
+    profile_path = profiles_dir / f"{supplier_code}.yaml"
+    if profile_path.exists():
+        st.warning(f"Profile '{supplier_code}' already exists — accepting will overwrite it")
+
+    profile_path.write_text(yaml_text, encoding="utf-8")
+
+    tmp_path = None
+    try:
+        tmp_dir = tempfile.mkdtemp()
+        tmp_path = os.path.join(tmp_dir, filename)
+        with open(tmp_path, "wb") as f:
+            f.write(entry["file_bytes"])
+
+        products, warnings = ingest(tmp_path)
+        st.session_state.processed_data.extend(products)
+        st.success(
+            f"✅ **{filename}**: {len(products)} products — Profile: {supplier_code}"
+        )
+        if warnings:
+            with st.expander(f"⚠️ Warnings from {filename}"):
+                for w in warnings:
+                    st.warning(w)
+
+    except NormalizeError as e:
+        st.error(f"Profile saved but ingest failed: {e}")
+
+    finally:
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+                os.rmdir(os.path.dirname(tmp_path))
+            except OSError:
+                pass
+
+    del st.session_state.pending_profiles[filename]
 
 
 def manual_supplier_processing(groq_api_key):
