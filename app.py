@@ -153,7 +153,8 @@ def main():
                 "buying_lists",
                 "manual_order_files",
                 "opportunity_engine",
-                "file_manager"
+                "file_manager",
+                "pending_profiles",
             ]
             for key in keys_to_reset:
                 if key in st.session_state:
