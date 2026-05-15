@@ -118,6 +118,7 @@ def suggest_profile(file_path: str) -> str:
     Read an Excel file and ask Groq to suggest a normalize profile YAML.
     Returns the raw YAML string.
     Requires GROQ_API_KEY environment variable.
+    Raises: ValueError if no sheets could be read; RuntimeError if Groq returns empty response.
     """
     sheets_info = extract_sheets_info(file_path)
     if not sheets_info:
@@ -134,4 +135,6 @@ def suggest_profile(file_path: str) -> str:
             {"role": "user", "content": prompt},
         ],
     )
+    if not response.choices or not response.choices[0].message:
+        raise RuntimeError("Groq returned empty response")
     return response.choices[0].message.content.strip()
