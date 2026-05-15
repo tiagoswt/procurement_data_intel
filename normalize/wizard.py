@@ -8,9 +8,11 @@ Usage:
 Reads an unknown Excel file and asks Groq to suggest a normalize profile YAML.
 Outputs to stdout or saves to profiles/<supplier_code>.draft.yaml.
 """
+import sys
 from pathlib import Path
 from typing import List, Optional
 import pandas as pd
+import yaml as _yaml
 from groq import Groq
 
 
@@ -133,3 +135,54 @@ def suggest_profile(file_path: str) -> str:
         ],
     )
     return response.choices[0].message.content.strip()
+
+
+def main():
+    """
+    CLI entry point.
+    Usage:
+        python -m normalize.wizard suggest <file.xlsx>
+        python -m normalize.wizard suggest <file.xlsx> --save
+    """
+    if len(sys.argv) < 3 or sys.argv[1] != "suggest":
+        print("Usage: python -m normalize.wizard suggest <file.xlsx> [--save]")
+        sys.exit(1)
+
+    file_path = sys.argv[2]
+    save = "--save" in sys.argv
+
+    if not Path(file_path).exists():
+        print(f"Error: file not found: {file_path}")
+        sys.exit(1)
+
+    print(f"Reading {file_path}...")
+    try:
+        yaml_text = suggest_profile(file_path)
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
+    # Validate that Groq returned parseable YAML
+    try:
+        profile = _yaml.safe_load(yaml_text)
+    except _yaml.YAMLError as e:
+        print(f"Warning: Groq returned invalid YAML: {e}")
+        print(yaml_text)
+        sys.exit(1)
+
+    supplier_code = profile.get("supplier_code", "unknown")
+
+    if save:
+        out_path = Path("profiles") / f"{supplier_code}.draft.yaml"
+        out_path.parent.mkdir(exist_ok=True)
+        out_path.write_text(yaml_text, encoding="utf-8")
+        print(f"Draft profile saved to: {out_path}")
+        print("Review it, rename to remove .draft, then run ingest to test.")
+    else:
+        print("\n--- Suggested profile (review before using) ---\n")
+        print(yaml_text)
+        print("\n--- Run with --save to write to profiles/<supplier>.draft.yaml ---")
+
+
+if __name__ == "__main__":
+    main()
