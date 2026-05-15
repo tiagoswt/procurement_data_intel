@@ -8,9 +8,12 @@ Usage:
 Reads an unknown Excel file and asks Groq to suggest a normalize profile YAML.
 Outputs to stdout or saves to profiles/<supplier_code>.draft.yaml.
 """
+import sys
 from pathlib import Path
 from typing import List, Optional
+
 import pandas as pd
+import yaml as _yaml
 from groq import Groq
 
 
@@ -140,10 +143,6 @@ def suggest_profile(file_path: str) -> str:
     return response.choices[0].message.content.strip()
 
 
-import sys
-import yaml as _yaml
-
-
 def main():
     """
     CLI entry point.
@@ -156,6 +155,11 @@ def main():
         sys.exit(1)
 
     file_path = sys.argv[2]
+
+    if file_path.startswith("--"):
+        print("Usage: python -m normalize.wizard suggest <file.xlsx> [--save]")
+        sys.exit(1)
+
     save = "--save" in sys.argv
 
     if not Path(file_path).exists():
