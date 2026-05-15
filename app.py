@@ -522,6 +522,36 @@ def _handle_profile_accept(
     del st.session_state.pending_profiles[filename]
 
 
+def _handle_profile_reject(filename: str, entry: dict, processor) -> None:
+    """Process a pending file with AI detection instead of the generated profile."""
+
+    class _FileObj:
+        name = filename
+
+        def getbuffer(self):
+            return entry["file_bytes"]
+
+        def seek(self, pos):
+            pass
+
+    result = processor.process_uploaded_file(
+        _FileObj(),
+        supplier_name=entry["supplier_name"],
+        manual_mapping=None,
+    )
+    if result.success:
+        st.session_state.processed_data.extend(result.products)
+        st.success(
+            f"✅ **{filename}**: {len(result.products)} products — AI detection"
+        )
+    else:
+        st.error(f"❌ **{filename}**: Processing failed")
+        for msg in result.errors[:3]:
+            st.error(f"  • {msg}")
+
+    del st.session_state.pending_profiles[filename]
+
+
 def manual_supplier_processing(groq_api_key):
     """Manual supplier catalog processing"""
 

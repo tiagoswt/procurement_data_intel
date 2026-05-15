@@ -138,3 +138,48 @@ def test_accept_ingest_failure_keeps_profile_no_products(tmp_path):
     assert st.session_state.processed_data == []
     assert "test.xlsx" not in st.session_state.pending_profiles
     st.error.assert_called()
+
+
+# ── reject: success path ──────────────────────────────────────────────────────
+
+def test_reject_processes_with_ai_detection_and_removes_pending():
+    from app import _handle_profile_reject
+    _reset_session(pending={"test.xlsx": _make_entry()})
+    product = _make_product()
+
+    mock_result = MagicMock()
+    mock_result.success = True
+    mock_result.products = [product]
+    mock_result.errors = []
+    processor = MagicMock()
+    processor.process_uploaded_file.return_value = mock_result
+
+    _handle_profile_reject("test.xlsx", _make_entry(), processor)
+
+    processor.process_uploaded_file.assert_called_once()
+    call_kwargs = processor.process_uploaded_file.call_args.kwargs
+    assert call_kwargs.get("supplier_name") == "Test Supplier"
+    assert call_kwargs.get("manual_mapping") is None
+    assert product in st.session_state.processed_data
+    assert "test.xlsx" not in st.session_state.pending_profiles
+
+
+# ── reject: processor failure ─────────────────────────────────────────────────
+
+def test_reject_processor_failure_shows_error_and_removes_pending():
+    from app import _handle_profile_reject
+    _reset_session(pending={"test.xlsx": _make_entry()})
+    st.error.reset_mock()
+
+    mock_result = MagicMock()
+    mock_result.success = False
+    mock_result.products = []
+    mock_result.errors = ["column not found"]
+    processor = MagicMock()
+    processor.process_uploaded_file.return_value = mock_result
+
+    _handle_profile_reject("test.xlsx", _make_entry(), processor)
+
+    st.error.assert_called()
+    assert st.session_state.processed_data == []
+    assert "test.xlsx" not in st.session_state.pending_profiles
