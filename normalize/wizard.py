@@ -140,7 +140,13 @@ def suggest_profile(file_path: str) -> str:
     )
     if not response.choices or not response.choices[0].message:
         raise RuntimeError("Groq returned empty response")
-    return response.choices[0].message.content.strip()
+    text = response.choices[0].message.content.strip()
+    # Strip markdown fences the model sometimes adds despite the instruction
+    if text.startswith("```"):
+        text = text.split("\n", 1)[-1]  # drop opening fence line
+        if text.endswith("```"):
+            text = text.rsplit("```", 1)[0]
+    return text.strip()
 
 
 def main():
