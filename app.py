@@ -609,10 +609,13 @@ def manual_supplier_processing(groq_api_key):
             with col_a:
                 st.write(f"📄 `{f.name}` → **{name}**")
             with col_b:
-                if name.lower() in existing_suppliers:
+                profile_code = detect_supplier(f.name)
+                if profile_code:
+                    st.success(f"📋 Profile: {profile_code}")
+                elif name.lower() in existing_suppliers:
                     st.info("✅ Registered")
                 else:
-                    st.success("🆕 New")
+                    st.info("🔍 AI detection")
 
     # Process files button
     if st.button("🚀 Process Supplier Files", type="primary", key="manual_process_btn"):
