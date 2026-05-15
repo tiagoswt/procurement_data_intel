@@ -555,6 +555,41 @@ def _handle_profile_reject(filename: str, entry: dict, processor) -> None:
     del st.session_state.pending_profiles[filename]
 
 
+def _show_pending_profile_reviews(groq_api_key: str) -> None:
+    """Render editable review cards for all pending profile drafts."""
+    if not st.session_state.get("pending_profiles"):
+        return
+
+    st.divider()
+    st.subheader("🔍 New Supplier Profiles — Review & Accept")
+    st.caption(
+        "The AI generated these profiles from your files. "
+        "Edit if needed, then accept to save and process."
+    )
+
+    processor = ProcurementProcessor(groq_api_key)
+
+    for filename, entry in list(st.session_state.pending_profiles.items()):
+        with st.expander(f"📄 {filename}", expanded=True):
+            edited_yaml = st.text_area(
+                "Profile YAML (editable)",
+                value=entry["yaml_text"],
+                height=300,
+                key=f"profile_yaml_{filename}",
+            )
+            col_accept, col_reject = st.columns(2)
+
+            with col_accept:
+                if st.button("✅ Accept & Process", key=f"accept_{filename}"):
+                    _handle_profile_accept(filename, edited_yaml, entry)
+                    st.rerun()
+
+            with col_reject:
+                if st.button("❌ Use AI detection", key=f"reject_{filename}"):
+                    _handle_profile_reject(filename, entry, processor)
+                    st.rerun()
+
+
 def manual_supplier_processing(groq_api_key):
     """Manual supplier catalog processing"""
 
@@ -657,6 +692,9 @@ def manual_supplier_processing(groq_api_key):
             max_file_size,
             manual_supplier_name,
         )
+
+    # Always rendered — review cards persist across re-runs until resolved
+    _show_pending_profile_reviews(groq_api_key)
 
 
 def process_manual_supplier_files(
