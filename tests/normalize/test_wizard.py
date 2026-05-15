@@ -80,3 +80,30 @@ def test_extract_skips_unnamed_columns():
         assert not any(str(c).startswith("Unnamed") for c in info[0]["columns"])
     finally:
         os.unlink(path)
+
+
+from normalize.wizard import format_prompt
+
+
+def test_format_prompt_contains_sheet_name():
+    info = [{
+        "sheet": "GARNIER",
+        "header_row": 1,
+        "columns": ["EAN", "Product Name", "Price"],
+        "samples": [{"EAN": "1234567890123", "Product Name": "Garnier Cream", "Price": "4.99"}],
+    }]
+    prompt = format_prompt("Garnier - Acme.xlsx", info)
+    assert "GARNIER" in prompt
+    assert "EAN" in prompt
+    assert "Garnier - Acme.xlsx" in prompt
+    assert "header row 1" in prompt
+
+
+def test_format_prompt_multiple_sheets():
+    info = [
+        {"sheet": "Brand A", "header_row": 1, "columns": ["Barcode", "Name", "Wholesale"], "samples": []},
+        {"sheet": "Brand B", "header_row": 2, "columns": ["EAN", "Description", "Price"], "samples": []},
+    ]
+    prompt = format_prompt("multi.xlsx", info)
+    assert "Brand A" in prompt
+    assert "Brand B" in prompt
