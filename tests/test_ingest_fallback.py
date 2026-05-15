@@ -1,12 +1,11 @@
 # tests/test_ingest_fallback.py
 import types, sys
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, mock_open
 from pathlib import Path
 
 # Stub streamlit so app.py can be imported without a running Streamlit server
 if "streamlit" not in sys.modules:
-    from unittest.mock import MagicMock
     st_stub = MagicMock()
     st_stub.session_state = MagicMock()
     st_stub.session_state.__contains__ = lambda self, key: False
@@ -51,9 +50,9 @@ def test_uses_profile_when_matched(tmp_path):
 
     with patch("app.detect_supplier", return_value="argon_trading"), \
          patch("app.ingest", return_value=([product], ["warn1"])), \
-         patch("app.tempfile.NamedTemporaryFile") as mock_tmp, \
+         patch("app.tempfile.mkdtemp", return_value=str(tmp_path)), \
+         patch("app.open", mock_open()), \
          patch("app.os.unlink"):
-        mock_tmp.return_value.__enter__.return_value.name = str(tmp_path / "f.xlsx")
         products, warnings, mode = _ingest_with_fallback(fake_file, "Argon Trading", processor)
 
     assert products == [product]
@@ -80,9 +79,9 @@ def test_falls_back_on_no_profile(tmp_path):
 
     with patch("app.detect_supplier", return_value=None), \
          patch("app.ingest", side_effect=NormalizeError("No profile matched")), \
-         patch("app.tempfile.NamedTemporaryFile") as mock_tmp, \
+         patch("app.tempfile.mkdtemp", return_value=str(tmp_path)), \
+         patch("app.open", mock_open()), \
          patch("app.os.unlink"):
-        mock_tmp.return_value.__enter__.return_value.name = str(tmp_path / "f.xlsx")
         products, warnings, mode = _ingest_with_fallback(fake_file, "Unknown", processor)
 
     assert products == [product]
@@ -104,9 +103,9 @@ def test_temp_file_cleaned_up_on_normalize_error(tmp_path):
     unlink_calls = []
     with patch("app.detect_supplier", return_value=None), \
          patch("app.ingest", side_effect=NormalizeError("no profile")), \
-         patch("app.tempfile.NamedTemporaryFile") as mock_tmp, \
+         patch("app.tempfile.mkdtemp", return_value="/tmp/testdir"), \
+         patch("app.open", mock_open()), \
          patch("app.os.unlink", side_effect=unlink_calls.append):
-        mock_tmp.return_value.__enter__.return_value.name = "/tmp/x.xlsx"
         _ingest_with_fallback(fake_file, "X", processor)
 
-    assert "/tmp/x.xlsx" in unlink_calls
+    assert any("unknown.xlsx" in p for p in unlink_calls)

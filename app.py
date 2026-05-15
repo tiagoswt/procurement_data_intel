@@ -474,10 +474,12 @@ def _ingest_with_fallback(
     """
     tmp_path = None
     try:
-        suffix = Path(uploaded_file.name).suffix
-        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-            tmp.write(uploaded_file.getbuffer())
-            tmp_path = tmp.name
+        # Write to a temp dir using the original filename so detect_supplier
+        # inside ingest() can match profile filename_patterns correctly.
+        tmp_dir = tempfile.mkdtemp()
+        tmp_path = os.path.join(tmp_dir, uploaded_file.name)
+        with open(tmp_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
 
         products, warnings = ingest(tmp_path)
         matched_code = detect_supplier(uploaded_file.name)
