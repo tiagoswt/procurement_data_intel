@@ -23,7 +23,8 @@ def extract_sheets_info(file_path: str, max_sheets: int = 5) -> List[dict]:
     Auto-detects whether headers are on row 1 or row 2.
     Returns list of dicts: {sheet, header_row, columns, samples}.
     """
-    xl = pd.ExcelFile(file_path, engine="openpyxl")
+    engine = "xlrd" if str(file_path).lower().endswith(".xls") else "openpyxl"
+    xl = pd.ExcelFile(file_path, engine=engine)
     results = []
 
     try:
