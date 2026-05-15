@@ -500,6 +500,7 @@ def _ingest_with_fallback(
         if tmp_path:
             try:
                 os.unlink(tmp_path)
+                os.rmdir(os.path.dirname(tmp_path))
             except OSError:
                 pass
 
@@ -675,7 +676,6 @@ def process_manual_supplier_files(
 
             # Process the file — try profile-based first, fall back to AI detection
             with st.spinner(f"Processing {uploaded_file.name}..."):
-                import time
                 t0 = time.time()
                 products, warnings, processing_mode = _ingest_with_fallback(
                     uploaded_file, supplier_name, processor
