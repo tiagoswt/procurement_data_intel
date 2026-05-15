@@ -45,7 +45,7 @@ def _read_sheet(xl: pd.ExcelFile, sheet_name: str) -> Optional[dict]:
         if len(named_cols) < 2:
             continue  # not enough real column headers — try next header row
 
-        df = df[[c for c in df.columns if not str(c).startswith("Unnamed")]]
+        df = df[named_cols]
         df = df.dropna(how="all")
 
         return {
