@@ -44,8 +44,8 @@ def _read_sheet(xl: pd.ExcelFile, sheet_name: str) -> Optional[dict]:
     for header_idx in [0, 1]:  # 0-indexed: row 1, then row 2
         try:
             df = pd.read_excel(xl, sheet_name=sheet_name, header=header_idx, nrows=3, dtype=str)
-        except Exception:
-            continue
+        except (ValueError, KeyError):
+            continue  # expected parse failures — try next header row
 
         named_cols = [c for c in df.columns if not str(c).startswith("Unnamed")]
         if len(named_cols) < 2:

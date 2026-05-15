@@ -13,7 +13,8 @@ def _make_excel(sheets: dict) -> str:
         ws = wb.create_sheet(name)
         for row in rows:
             ws.append(row)
-    path = tempfile.mktemp(suffix=".xlsx")
+    with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
+        path = f.name
     wb.save(path)
     return path
 
@@ -73,9 +74,10 @@ def test_extract_skips_unnamed_columns():
     try:
         info = extract_sheets_info(path)
         # Unnamed columns (None headers after pandas reads) should be filtered
-        named_cols = [c for c in info[0]["columns"] if not str(c).startswith("Unnamed")]
-        assert "EAN" in named_cols
-        assert "Price" in named_cols
+        assert "EAN" in info[0]["columns"]
+        assert "Price" in info[0]["columns"]
+        # None header becomes "Unnamed: 2" in pandas — should NOT be in columns
+        assert not any(str(c).startswith("Unnamed") for c in info[0]["columns"])
     finally:
         os.unlink(path)
 

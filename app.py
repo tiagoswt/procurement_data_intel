@@ -52,6 +52,11 @@ from utils import (
     get_processing_stats,
     extract_supplier_name,
 )
+import tempfile
+import yaml as _yaml
+from normalize import NormalizeError, ingest
+from normalize.detect import detect_supplier
+from normalize.wizard import suggest_profile
 
 # Configure page
 st.set_page_config(
@@ -84,6 +89,9 @@ if "enhanced_order_optimizer" not in st.session_state:
 # Add campaign configuration to session state
 if "campaign_discount_threshold" not in st.session_state:
     st.session_state.campaign_discount_threshold = 15.0
+
+if "pending_profiles" not in st.session_state:
+    st.session_state.pending_profiles = {}
 
 # =============================================================================
 # PHASE 2: FEATURE FLAGS CONFIGURATION
@@ -149,7 +157,8 @@ def main():
                 "buying_lists",
                 "manual_order_files",
                 "opportunity_engine",
-                "file_manager"
+                "file_manager",
+                "pending_profiles",
             ]
             for key in keys_to_reset:
                 if key in st.session_state:
@@ -505,6 +514,129 @@ def _ingest_with_fallback(
                 pass
 
 
+def _handle_profile_accept(
+    filename: str,
+    yaml_text: str,
+    entry: dict,
+    profiles_dir: Path = None,
+) -> None:
+    """Validate and save an accepted YAML draft, then re-ingest the file."""
+    if profiles_dir is None:
+        profiles_dir = Path("profiles")
+
+    try:
+        profile = _yaml.safe_load(yaml_text)
+    except _yaml.YAMLError as e:
+        st.error(f"Invalid YAML — fix before accepting: {e}")
+        return
+
+    supplier_code = profile.get("supplier_code")
+    if not supplier_code:
+        st.error("YAML must have a `supplier_code` field")
+        return
+
+    profile_path = profiles_dir / f"{supplier_code}.yaml"
+    if profile_path.exists():
+        st.warning(f"Profile '{supplier_code}' already exists — accepting will overwrite it")
+
+    profile_path.write_text(yaml_text, encoding="utf-8")
+
+    tmp_path = None
+    try:
+        tmp_dir = tempfile.mkdtemp()
+        tmp_path = os.path.join(tmp_dir, filename)
+        with open(tmp_path, "wb") as f:
+            f.write(entry["file_bytes"])
+
+        products, warnings = ingest(tmp_path)
+        st.session_state.processed_data.extend(products)
+        st.success(
+            f"✅ **{filename}**: {len(products)} products — Profile: {supplier_code}"
+        )
+        if warnings:
+            with st.expander(f"⚠️ Warnings from {filename}"):
+                for w in warnings:
+                    st.warning(w)
+
+    except NormalizeError as e:
+        st.error(f"Profile saved but ingest failed: {e}")
+
+    finally:
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+                os.rmdir(os.path.dirname(tmp_path))
+            except OSError:
+                pass
+
+    del st.session_state.pending_profiles[filename]
+
+
+def _handle_profile_reject(filename: str, entry: dict, processor) -> None:
+    """Process a pending file with AI detection instead of the generated profile."""
+
+    class _FileObj:
+        name = filename
+
+        def getbuffer(self):
+            return entry["file_bytes"]
+
+        def seek(self, pos):
+            pass
+
+    result = processor.process_uploaded_file(
+        _FileObj(),
+        supplier_name=entry["supplier_name"],
+        manual_mapping=None,
+    )
+    if result.success:
+        st.session_state.processed_data.extend(result.products)
+        st.success(
+            f"✅ **{filename}**: {len(result.products)} products — AI detection"
+        )
+    else:
+        st.error(f"❌ **{filename}**: Processing failed")
+        for msg in result.errors[:3]:
+            st.error(f"  • {msg}")
+
+    del st.session_state.pending_profiles[filename]
+
+
+def _show_pending_profile_reviews(groq_api_key: str) -> None:
+    """Render editable review cards for all pending profile drafts."""
+    if not st.session_state.get("pending_profiles"):
+        return
+
+    st.divider()
+    st.subheader("🔍 New Supplier Profiles — Review & Accept")
+    st.caption(
+        "The AI generated these profiles from your files. "
+        "Edit if needed, then accept to save and process."
+    )
+
+    processor = ProcurementProcessor(groq_api_key)
+
+    for filename, entry in list(st.session_state.pending_profiles.items()):
+        with st.expander(f"📄 {filename}", expanded=True):
+            edited_yaml = st.text_area(
+                "Profile YAML (editable)",
+                value=entry["yaml_text"],
+                height=300,
+                key=f"profile_yaml_{filename}",
+            )
+            col_accept, col_reject = st.columns(2)
+
+            with col_accept:
+                if st.button("✅ Accept & Process", key=f"accept_{filename}"):
+                    _handle_profile_accept(filename, edited_yaml, entry)
+                    st.rerun()
+
+            with col_reject:
+                if st.button("❌ Use AI detection", key=f"reject_{filename}"):
+                    _handle_profile_reject(filename, entry, processor)
+                    st.rerun()
+
+
 def manual_supplier_processing(groq_api_key):
     """Manual supplier catalog processing"""
 
@@ -628,6 +760,9 @@ def manual_supplier_processing(groq_api_key):
             manual_supplier_name,
         )
 
+    # Always rendered — review cards persist across re-runs until resolved
+    _show_pending_profile_reviews(groq_api_key)
+
 
 def process_manual_supplier_files(
     uploaded_files,
@@ -674,7 +809,41 @@ def process_manual_supplier_files(
             else:
                 supplier_name = extract_supplier_name(Path(uploaded_file.name).stem)
 
-            # Process the file — try profile-based first, fall back to AI detection
+            # Files with a known profile process immediately.
+            # Unknown files get a Groq-generated draft queued for review.
+            profile_code = detect_supplier(uploaded_file.name)
+            if profile_code is None:
+                gen_tmp = None
+                try:
+                    with st.spinner(f"Generating profile for {uploaded_file.name}..."):
+                        gen_dir = tempfile.mkdtemp()
+                        gen_tmp = os.path.join(gen_dir, uploaded_file.name)
+                        with open(gen_tmp, "wb") as _f:
+                            _f.write(uploaded_file.getbuffer())
+                        yaml_text = suggest_profile(gen_tmp)
+                    st.session_state.pending_profiles[uploaded_file.name] = {
+                        "yaml_text": yaml_text,
+                        "file_bytes": bytes(uploaded_file.getbuffer()),
+                        "supplier_name": supplier_name,
+                    }
+                    st.info(
+                        f"📝 **{uploaded_file.name}**: No profile found — "
+                        f"review the generated profile below"
+                    )
+                    continue
+                except Exception:
+                    st.warning(
+                        f"⚠️ **{uploaded_file.name}**: Could not generate profile "
+                        f"— falling back to AI detection"
+                    )
+                finally:
+                    if gen_tmp:
+                        try:
+                            os.unlink(gen_tmp)
+                            os.rmdir(os.path.dirname(gen_tmp))
+                        except OSError:
+                            pass
+
             with st.spinner(f"Processing {uploaded_file.name}..."):
                 t0 = time.time()
                 products, warnings, processing_mode = _ingest_with_fallback(
