@@ -14,6 +14,7 @@ from typing import List, Optional
 
 import pandas as pd
 import yaml as _yaml
+from dotenv import load_dotenv
 from groq import Groq
 
 
@@ -157,6 +158,7 @@ def main():
         python -m normalize.wizard suggest <file.xlsx>
         python -m normalize.wizard suggest <file.xlsx> --save
     """
+    load_dotenv()
     if len(sys.argv) < 3 or sys.argv[1] != "suggest":
         print("Usage: python -m normalize.wizard suggest <file.xlsx> [--save]")
         sys.exit(1)
