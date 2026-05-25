@@ -16,41 +16,42 @@ COLUMNS = [
 
 
 def load_data(db_path: str) -> list:
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    rows = conn.execute("""
-        SELECT
-            sp.supplier,
-            sp.ean,
-            COALESCE(p.brand, '') AS brand,
-            COALESCE(p.description, '') AS description,
-            COALESCE(idat.current_stock, 0) AS current_stock,
-            COALESCE(idat.sales90d, 0) AS sales_90d,
-            COALESCE(idat.avg_stock_price, 0) AS avg_stock_price,
-            sp.price_net AS supplier_price_net
-        FROM supplier_prices sp
-        JOIN processing_runs pr ON sp.run_id = pr.id
-        JOIN (
-            SELECT sp2.ean, sp2.supplier, MAX(pr2.run_at) AS max_run_at
-            FROM supplier_prices sp2
-            JOIN processing_runs pr2 ON sp2.run_id = pr2.id
-            GROUP BY sp2.ean, sp2.supplier
-        ) latest ON sp.ean = latest.ean
-                   AND sp.supplier = latest.supplier
-                   AND pr.run_at = latest.max_run_at
-        JOIN (
-            SELECT idat2.ean, idat2.current_stock, idat2.sales90d, idat2.avg_stock_price
-            FROM internal_data idat2
-            JOIN processing_runs pr3 ON idat2.run_id = pr3.id
-            WHERE pr3.run_at = (SELECT MAX(run_at) FROM processing_runs)
-        ) idat ON sp.ean = idat.ean
-        LEFT JOIN (
-            SELECT ean, MAX(rowid) AS rid FROM products GROUP BY ean
-        ) lp ON sp.ean = lp.ean
-        LEFT JOIN products p ON p.rowid = lp.rid
-        WHERE sp.price_net > 0
-    """).fetchall()
-    conn.close()
+    if not os.path.exists(db_path):
+        raise FileNotFoundError(f"Database not found: {db_path!r}")
+    with sqlite3.connect(db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("""
+            SELECT
+                sp.supplier,
+                sp.ean,
+                COALESCE(p.brand, '') AS brand,
+                COALESCE(p.description, '') AS description,
+                COALESCE(idat.current_stock, 0) AS current_stock,
+                COALESCE(idat.sales90d, 0) AS sales_90d,
+                COALESCE(idat.avg_stock_price, 0) AS avg_stock_price,
+                sp.price_net AS supplier_price_net
+            FROM supplier_prices sp
+            JOIN processing_runs pr ON sp.run_id = pr.id
+            JOIN (
+                SELECT sp2.ean, sp2.supplier, MAX(pr2.run_at) AS max_run_at
+                FROM supplier_prices sp2
+                JOIN processing_runs pr2 ON sp2.run_id = pr2.id
+                GROUP BY sp2.ean, sp2.supplier
+            ) latest ON sp.ean = latest.ean
+                       AND sp.supplier = latest.supplier
+                       AND pr.run_at = latest.max_run_at
+            JOIN (
+                SELECT idat2.ean, idat2.current_stock, idat2.sales90d, idat2.avg_stock_price
+                FROM internal_data idat2
+                JOIN processing_runs pr3 ON idat2.run_id = pr3.id
+                WHERE pr3.run_at = (SELECT MAX(run_at) FROM processing_runs)
+            ) idat ON sp.ean = idat.ean
+            LEFT JOIN (
+                SELECT ean, MAX(rowid) AS rid FROM products GROUP BY ean
+            ) lp ON sp.ean = lp.ean
+            LEFT JOIN products p ON p.rowid = lp.rid
+            WHERE sp.price_net > 0
+        """).fetchall()
     return [dict(r) for r in rows]
 
 
@@ -71,10 +72,10 @@ def score_opportunities(rows: list, threshold: float) -> dict:
             continue
 
         saving_pct = 0.0
-        saving_eur = 0.0
+        saving_eur_per_unit = 0.0
         if avg_price > 0:
             saving_pct = (avg_price - sup_price) / avg_price * 100
-            saving_eur = avg_price - sup_price
+            saving_eur_per_unit = avg_price - sup_price
 
         row_data = {
             "ean": r["ean"],
@@ -86,10 +87,12 @@ def score_opportunities(rows: list, threshold: float) -> dict:
             "avg_stock_price": round(avg_price, 2),
             "supplier_price_net": round(sup_price, 2),
             "saving_pct": round(saving_pct, 1),
-            "saving_eur_per_unit": round(saving_eur, 2),
+            "saving_eur_per_unit": round(saving_eur_per_unit, 2),
         }
 
         if net_need > 0:
+            # NEED takes priority: a product with both a stock gap and a good price
+            # is a need-based buy, not an opportunistic overstock.
             row_data["opportunity_type"] = "NEED"
             suppliers[supplier]["need"].append(row_data)
         elif avg_price > 0 and saving_pct >= threshold:
@@ -165,7 +168,8 @@ def main():
     args = parser.parse_args()
 
     today = date.today().isoformat()
-    output_dir = os.path.join("output", "orders", today)
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    output_dir = os.path.join(project_root, "output", "orders", today)
 
     print(f"Loading data from {args.db}...")
     rows = load_data(args.db)
