@@ -21,3 +21,6 @@ data/
 # OS
 .DS_Store
 Thumbs.db
+
+# Generated order CSVs
+output/orders/*/
