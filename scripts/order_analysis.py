@@ -11,7 +11,7 @@ COLUMNS = [
     "opportunity_type", "ean", "brand", "description",
     "current_stock", "sales_90d", "net_need",
     "avg_stock_price", "supplier_price_net",
-    "saving_pct", "saving_eur_per_unit",
+    "saving_pct", "saving_eur_per_unit", "suggested_qty",
 ]
 
 
@@ -88,15 +88,18 @@ def score_opportunities(rows: list, threshold: float) -> dict:
             "supplier_price_net": round(sup_price, 2),
             "saving_pct": round(saving_pct, 1),
             "saving_eur_per_unit": round(saving_eur_per_unit, 2),
+            "suggested_qty": 0,
         }
 
         if net_need > 0:
             # NEED takes priority: a product with both a stock gap and a good price
             # is a need-based buy, not an opportunistic overstock.
             row_data["opportunity_type"] = "NEED"
+            row_data["suggested_qty"] = net_need
             suppliers[supplier]["need"].append(row_data)
         elif avg_price > 0 and saving_pct >= threshold and sales_90d > 0:
             row_data["opportunity_type"] = "PRICE"
+            row_data["suggested_qty"] = sales_90d
             suppliers[supplier]["price"].append(row_data)
 
     for sup_data in suppliers.values():

@@ -148,7 +148,7 @@ def test_write_csvs_creates_file(tmp_path):
                       "description": "D", "current_stock": 10, "sales_90d": 100,
                       "net_need": 90, "avg_stock_price": 12.0,
                       "supplier_price_net": 10.0, "saving_pct": 16.7,
-                      "saving_eur_per_unit": 2.0}],
+                      "saving_eur_per_unit": 2.0, "suggested_qty": 90}],
             "price": [],
         }
     }
@@ -172,12 +172,12 @@ def test_write_csvs_need_before_price(tmp_path):
                       "description": "", "current_stock": 0, "sales_90d": 10,
                       "net_need": 10, "avg_stock_price": 10.0,
                       "supplier_price_net": 8.0, "saving_pct": 20.0,
-                      "saving_eur_per_unit": 2.0}],
+                      "saving_eur_per_unit": 2.0, "suggested_qty": 10}],
             "price": [{"opportunity_type": "PRICE", "ean": "P1", "brand": "",
                        "description": "", "current_stock": 200, "sales_90d": 10,
                        "net_need": -190, "avg_stock_price": 10.0,
                        "supplier_price_net": 8.0, "saving_pct": 20.0,
-                       "saving_eur_per_unit": 2.0}],
+                       "saving_eur_per_unit": 2.0, "suggested_qty": 10}],
         }
     }
     written = write_csvs(suppliers, str(tmp_path))
@@ -196,13 +196,31 @@ def test_write_csvs_skips_empty_supplier(tmp_path):
                       "description": "", "current_stock": 0, "sales_90d": 10,
                       "net_need": 10, "avg_stock_price": 10.0,
                       "supplier_price_net": 8.0, "saving_pct": 20.0,
-                      "saving_eur_per_unit": 2.0}],
+                      "saving_eur_per_unit": 2.0, "suggested_qty": 10}],
             "price": [],
         },
     }
     written = write_csvs(suppliers, str(tmp_path))
     assert len(written) == 1
     assert written[0][0] == "has_data"
+
+
+# ---------------------------------------------------------------------------
+# suggested_qty
+# ---------------------------------------------------------------------------
+
+def test_need_suggested_qty_equals_net_need():
+    rows = [_row(ean="001", current_stock=10, sales_90d=100, supplier_price_net=10.0)]
+    result = score_opportunities(rows, threshold=15.0)
+    row = result["hispalbeauty"]["need"][0]
+    assert row["suggested_qty"] == 90  # net_need = 100 - 10
+
+
+def test_price_suggested_qty_equals_sales_90d():
+    rows = [_row(ean="002", current_stock=200, sales_90d=50, avg_stock_price=12.0, supplier_price_net=9.0)]
+    result = score_opportunities(rows, threshold=15.0)
+    row = result["hispalbeauty"]["price"][0]
+    assert row["suggested_qty"] == 50  # sales_90d
 
 
 def test_type2_excluded_when_no_sales():
