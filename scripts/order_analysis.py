@@ -95,7 +95,7 @@ def score_opportunities(rows: list, threshold: float) -> dict:
             # is a need-based buy, not an opportunistic overstock.
             row_data["opportunity_type"] = "NEED"
             suppliers[supplier]["need"].append(row_data)
-        elif avg_price > 0 and saving_pct >= threshold:
+        elif avg_price > 0 and saving_pct >= threshold and sales_90d > 0:
             row_data["opportunity_type"] = "PRICE"
             suppliers[supplier]["price"].append(row_data)
 

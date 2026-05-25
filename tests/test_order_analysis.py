@@ -203,3 +203,11 @@ def test_write_csvs_skips_empty_supplier(tmp_path):
     written = write_csvs(suppliers, str(tmp_path))
     assert len(written) == 1
     assert written[0][0] == "has_data"
+
+
+def test_type2_excluded_when_no_sales():
+    # saving_pct=25%, stock sufficient, but zero sales — should NOT be a PRICE opportunity
+    rows = [_row(ean="Z", current_stock=200, sales_90d=0, avg_stock_price=12.0, supplier_price_net=9.0)]
+    result = score_opportunities(rows, threshold=15.0)
+    price_rows = result.get("hispalbeauty", {}).get("price", [])
+    assert len(price_rows) == 0
