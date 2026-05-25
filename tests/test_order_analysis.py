@@ -22,14 +22,14 @@ def _row(**kwargs):
 
 
 SAMPLE_ROWS = [
-    # Type 1: net_need = 90 (sales90d=100, stock=10)
+    # PRICE: net_need=90 > 0, saving=16.7% >= 15%
     _row(ean="001", current_stock=10, sales_90d=100, avg_stock_price=12.0, supplier_price_net=10.0),
-    # Type 2: saving = 25%, stock sufficient (sales90d=50, stock=200)
-    _row(ean="002", current_stock=200, sales_90d=50, avg_stock_price=12.0, supplier_price_net=9.0),
-    # Outlier: price > 10x avg — should be excluded
+    # NEED only: net_need=400 > 0, saving=10% < 15%
+    _row(ean="002", current_stock=100, sales_90d=500, avg_stock_price=5.0, supplier_price_net=4.5),
+    # Outlier: price > 10x avg — excluded
     _row(ean="003", supplier="copedis", avg_stock_price=8.0, supplier_price_net=9_153_124_999.0),
-    # Below threshold: 10% saving, stock sufficient — excluded from Type 2
-    _row(ean="004", current_stock=500, sales_90d=100, avg_stock_price=5.0, supplier_price_net=4.5),
+    # Excluded: net_need <= 0 (stock sufficient, saving=25% but irrelevant)
+    _row(ean="004", current_stock=200, sales_90d=50, avg_stock_price=12.0, supplier_price_net=9.0),
 ]
 
 
@@ -40,21 +40,22 @@ SAMPLE_ROWS = [
 def test_type1_classified_as_need():
     result = score_opportunities(SAMPLE_ROWS, threshold=15.0)
     need_rows = result["hispalbeauty"]["need"]
-    assert any(r["ean"] == "001" for r in need_rows)
+    assert any(r["ean"] == "002" for r in need_rows)
     assert all(r["opportunity_type"] == "NEED" for r in need_rows)
 
 
 def test_type1_net_need_correct():
     result = score_opportunities(SAMPLE_ROWS, threshold=15.0)
-    row = next(r for r in result["hispalbeauty"]["need"] if r["ean"] == "001")
-    assert row["net_need"] == 90
+    row = next(r for r in result["hispalbeauty"]["need"] if r["ean"] == "002")
+    assert row["net_need"] == 400  # 500 - 100
 
 
 def test_type1_sorted_by_net_need_desc():
+    # supplier_price_net=11.5 → saving=4.2% < 15% → all go to NEED
     rows = [
-        _row(ean="A", current_stock=0, sales_90d=10, supplier_price_net=10.0),   # net_need=10
-        _row(ean="B", current_stock=0, sales_90d=50, supplier_price_net=10.0),   # net_need=50
-        _row(ean="C", current_stock=0, sales_90d=200, supplier_price_net=10.0),  # net_need=200
+        _row(ean="A", current_stock=0, sales_90d=10, supplier_price_net=11.5),   # net_need=10
+        _row(ean="B", current_stock=0, sales_90d=50, supplier_price_net=11.5),   # net_need=50
+        _row(ean="C", current_stock=0, sales_90d=200, supplier_price_net=11.5),  # net_need=200
     ]
     result = score_opportunities(rows, threshold=15.0)
     need_rows = result["hispalbeauty"]["need"]
@@ -68,22 +69,22 @@ def test_type1_sorted_by_net_need_desc():
 def test_type2_classified_as_price():
     result = score_opportunities(SAMPLE_ROWS, threshold=15.0)
     price_rows = result["hispalbeauty"]["price"]
-    assert any(r["ean"] == "002" for r in price_rows)
+    assert any(r["ean"] == "001" for r in price_rows)
     assert all(r["opportunity_type"] == "PRICE" for r in price_rows)
 
 
 def test_type2_saving_pct_correct():
     result = score_opportunities(SAMPLE_ROWS, threshold=15.0)
-    row = next(r for r in result["hispalbeauty"]["price"] if r["ean"] == "002")
-    assert row["saving_pct"] == 25.0
-    assert row["saving_eur_per_unit"] == 3.0
+    row = next(r for r in result["hispalbeauty"]["price"] if r["ean"] == "001")
+    assert row["saving_pct"] == 16.7
+    assert row["saving_eur_per_unit"] == 2.0
 
 
 def test_type2_sorted_by_saving_pct_desc():
     rows = [
-        _row(ean="X", current_stock=500, sales_90d=10, avg_stock_price=10.0, supplier_price_net=8.0),  # 20%
-        _row(ean="Y", current_stock=500, sales_90d=10, avg_stock_price=10.0, supplier_price_net=6.0),  # 40%
-        _row(ean="Z", current_stock=500, sales_90d=10, avg_stock_price=10.0, supplier_price_net=7.0),  # 30%
+        _row(ean="X", current_stock=0, sales_90d=10, avg_stock_price=10.0, supplier_price_net=8.0),  # 20%
+        _row(ean="Y", current_stock=0, sales_90d=10, avg_stock_price=10.0, supplier_price_net=6.0),  # 40%
+        _row(ean="Z", current_stock=0, sales_90d=10, avg_stock_price=10.0, supplier_price_net=7.0),  # 30%
     ]
     result = score_opportunities(rows, threshold=15.0)
     price_rows = result["hispalbeauty"]["price"]
@@ -91,23 +92,25 @@ def test_type2_sorted_by_saving_pct_desc():
 
 
 def test_type2_below_threshold_excluded():
+    # EAN "002": net_need=400 > 0 but saving=10% < 15% — must NOT be PRICE
     result = score_opportunities(SAMPLE_ROWS, threshold=15.0)
     price_rows = result["hispalbeauty"]["price"]
-    assert all(r["ean"] != "004" for r in price_rows)
-
-
-def test_custom_threshold_25_excludes_25pct_item():
-    # EAN 002 has exactly 25% saving — excluded when threshold=26
-    result = score_opportunities(SAMPLE_ROWS, threshold=26.0)
-    price_rows = result.get("hispalbeauty", {}).get("price", [])
     assert all(r["ean"] != "002" for r in price_rows)
 
 
-def test_type1_item_not_duplicated_in_type2():
-    # EAN 001 has net_need > 0 AND saving >= 15% — should only be in NEED
+def test_custom_threshold_25_excludes_25pct_item():
+    # Row with net_need > 0 and exactly 25% saving — excluded when threshold=26
+    rows = [_row(ean="T", current_stock=0, sales_90d=10, avg_stock_price=12.0, supplier_price_net=9.0)]
+    result = score_opportunities(rows, threshold=26.0)
+    price_rows = result.get("hispalbeauty", {}).get("price", [])
+    assert all(r["ean"] != "T" for r in price_rows)
+
+
+def test_price_item_not_in_need():
+    # EAN "001": net_need > 0 AND saving >= 15% — must be in PRICE only, not NEED
     result = score_opportunities(SAMPLE_ROWS, threshold=15.0)
-    price_rows = result["hispalbeauty"]["price"]
-    assert all(r["ean"] != "001" for r in price_rows)
+    need_rows = result["hispalbeauty"]["need"]
+    assert all(r["ean"] != "001" for r in need_rows)
 
 
 # ---------------------------------------------------------------------------
@@ -210,22 +213,16 @@ def test_write_csvs_skips_empty_supplier(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_need_suggested_qty_equals_net_need():
-    rows = [_row(ean="001", current_stock=10, sales_90d=100, supplier_price_net=10.0)]
+    # supplier_price_net=11.5 → saving=4.2% < 15% → goes to NEED
+    rows = [_row(ean="001", current_stock=10, sales_90d=100, avg_stock_price=12.0, supplier_price_net=11.5)]
     result = score_opportunities(rows, threshold=15.0)
     row = result["hispalbeauty"]["need"][0]
     assert row["suggested_qty"] == 90  # net_need = 100 - 10
 
 
-def test_price_suggested_qty_equals_sales_90d():
-    rows = [_row(ean="002", current_stock=200, sales_90d=50, avg_stock_price=12.0, supplier_price_net=9.0)]
+def test_price_suggested_qty_equals_net_need():
+    # PRICE row: net_need=90, saving=16.7% — suggested_qty should be net_need
+    rows = [_row(ean="001", current_stock=10, sales_90d=100, avg_stock_price=12.0, supplier_price_net=10.0)]
     result = score_opportunities(rows, threshold=15.0)
     row = result["hispalbeauty"]["price"][0]
-    assert row["suggested_qty"] == 50  # sales_90d
-
-
-def test_type2_excluded_when_no_sales():
-    # saving_pct=25%, stock sufficient, but zero sales — should NOT be a PRICE opportunity
-    rows = [_row(ean="Z", current_stock=200, sales_90d=0, avg_stock_price=12.0, supplier_price_net=9.0)]
-    result = score_opportunities(rows, threshold=15.0)
-    price_rows = result.get("hispalbeauty", {}).get("price", [])
-    assert len(price_rows) == 0
+    assert row["suggested_qty"] == 90  # net_need = 100 - 10

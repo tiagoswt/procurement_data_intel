@@ -91,16 +91,15 @@ def score_opportunities(rows: list, threshold: float) -> dict:
             "suggested_qty": 0,
         }
 
-        if net_need > 0:
-            # NEED takes priority: a product with both a stock gap and a good price
-            # is a need-based buy, not an opportunistic overstock.
+        if net_need > 0 and avg_price > 0 and saving_pct >= threshold:
+            # Best opportunity: understocked AND supplier price is significantly cheaper
+            row_data["opportunity_type"] = "PRICE"
+            row_data["suggested_qty"] = net_need
+            suppliers[supplier]["price"].append(row_data)
+        elif net_need > 0:
             row_data["opportunity_type"] = "NEED"
             row_data["suggested_qty"] = net_need
             suppliers[supplier]["need"].append(row_data)
-        elif avg_price > 0 and saving_pct >= threshold and sales_90d > 0:
-            row_data["opportunity_type"] = "PRICE"
-            row_data["suggested_qty"] = sales_90d
-            suppliers[supplier]["price"].append(row_data)
 
     for sup_data in suppliers.values():
         sup_data["need"].sort(key=lambda x: (-x["net_need"], -x["saving_pct"]))
