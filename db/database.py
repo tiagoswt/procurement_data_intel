@@ -1,3 +1,4 @@
+import re
 import sqlite3
 import uuid
 import json
@@ -24,6 +25,7 @@ class ProcurementDB:
     def _init_schema(self):
         with self._get_conn() as conn:
             conn.executescript("""
+
                 CREATE TABLE IF NOT EXISTS processing_runs (
                     id           TEXT PRIMARY KEY,
                     run_at       TIMESTAMP NOT NULL,
@@ -46,7 +48,8 @@ class ProcurementDB:
                     currency     TEXT DEFAULT 'EUR',
                     quantity     INT,
                     run_id       TEXT REFERENCES processing_runs(id),
-                    ingested_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    ingested_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    valid_until  DATE
                 );
                 CREATE INDEX IF NOT EXISTS idx_sp_ean_ingested
                     ON supplier_prices (ean, ingested_at DESC);
@@ -62,11 +65,44 @@ class ProcurementDB:
                     qnt_pending       INT
                 );
             """)
+        self._migrate_schema()
+        self._normalize_supplier_names()
 
-    def save_supplier_batch(self, source_files: List[str], products) -> str:
-        """Persist a supplier processing batch. Returns the new run_id."""
+    def _migrate_schema(self):
+        with self._get_conn() as conn:
+            try:
+                conn.execute("ALTER TABLE supplier_prices ADD COLUMN valid_until DATE")
+            except Exception:
+                pass  # column already exists
+
+    def _normalize_supplier_names(self):
+        """Retroactively strip _DDMMYYYY date suffix from supplier names already in the DB."""
+        with self._get_conn() as conn:
+            rows = conn.execute("SELECT DISTINCT supplier FROM supplier_prices").fetchall()
+            for row in rows:
+                old = row[0]
+                new = re.sub(r'_\d{8}$', '', old)
+                if new != old:
+                    conn.execute(
+                        "UPDATE supplier_prices SET supplier = ? WHERE supplier = ?",
+                        (new, old),
+                    )
+
+    def save_supplier_batch(
+        self,
+        source_files: List[str],
+        products,
+        validity_days: Optional[Dict[str, Optional[int]]] = None,
+    ) -> str:
+        """Persist a supplier processing batch. Returns the new run_id.
+
+        validity_days: maps supplier name → number of days the offer is valid.
+            None value (or missing key) means no expiry.
+        """
         run_id = str(uuid.uuid4())
         run_at = datetime.utcnow().isoformat()
+        today = datetime.utcnow().date()
+        validity_days = validity_days or {}
         try:
             with self._get_conn() as conn:
                 conn.execute(
@@ -79,16 +115,20 @@ class ProcurementDB:
                         ean = str(getattr(p, "supplier_code", "") or "").strip()
                     if not ean:
                         continue
+                    supplier = str(getattr(p, "supplier", "Unknown") or "Unknown")
                     qty = getattr(p, "quantity", None)
+                    days = validity_days.get(supplier)
+                    valid_until = (today + timedelta(days=days)).isoformat() if days is not None else None
                     conn.execute(
-                        "INSERT INTO supplier_prices (ean, supplier, price_net, currency, quantity, run_id) VALUES (?, ?, ?, ?, ?, ?)",
+                        "INSERT INTO supplier_prices (ean, supplier, price_net, currency, quantity, run_id, valid_until) VALUES (?, ?, ?, ?, ?, ?, ?)",
                         (
                             ean,
-                            str(getattr(p, "supplier", "Unknown") or "Unknown"),
+                            supplier,
                             float(getattr(p, "price", 0) or 0),
                             "EUR",
                             int(qty) if qty is not None else None,
                             run_id,
+                            valid_until,
                         ),
                     )
             logger.info(f"Batch saved: run_id={run_id}, {len(products)} prices")
@@ -169,7 +209,10 @@ class ProcurementDB:
         query += " ORDER BY pr.run_at ASC"
         with self._get_conn() as conn:
             rows = conn.execute(query, params).fetchall()
-        return [dict(r) for r in rows]
+        return [
+            {**dict(r), "supplier": re.sub(r'_\d{8}$', '', r["supplier"] or "")}
+            for r in rows
+        ]
 
     def get_all_supplier_prices(self) -> List[Dict]:
         with self._get_conn() as conn:
@@ -184,7 +227,18 @@ class ProcurementDB:
                    LEFT JOIN products p ON p.rowid = latest_p.rid
                    ORDER BY pr.run_at DESC"""
             ).fetchall()
-        return [dict(r) for r in rows]
+        return [
+            {**dict(r), "supplier": re.sub(r'_\d{8}$', '', r["supplier"] or "")}
+            for r in rows
+        ]
+
+    def get_distinct_suppliers(self) -> List[str]:
+        """Return all distinct supplier names stored in the DB."""
+        with self._get_conn() as conn:
+            rows = conn.execute(
+                "SELECT DISTINCT supplier FROM supplier_prices ORDER BY supplier"
+            ).fetchall()
+        return [re.sub(r'_\d{8}$', '', row[0] or "").strip() for row in rows if row[0]]
 
     def get_latest_internal_data(self) -> List[Dict]:
         with self._get_conn() as conn:
@@ -204,3 +258,14 @@ class ProcurementDB:
                 (latest["id"],),
             ).fetchall()
         return [dict(r) for r in rows]
+
+    def clear_all_data(self) -> None:
+        """Delete all rows from every table. Irreversible."""
+        with self._get_conn() as conn:
+            conn.executescript("""
+                DELETE FROM supplier_prices;
+                DELETE FROM internal_data;
+                DELETE FROM products;
+                DELETE FROM processing_runs;
+            """)
+        logger.info("All database data cleared.")

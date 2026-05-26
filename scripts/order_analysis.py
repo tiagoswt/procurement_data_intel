@@ -9,7 +9,7 @@ from datetime import date
 DB_PATH = "procurement.db"
 COLUMNS = [
     "opportunity_type", "ean", "brand", "description",
-    "current_stock", "sales_90d", "net_need",
+    "current_stock", "qnt_pending", "supplier_quantity", "sales_90d", "net_need",
     "avg_stock_price", "supplier_price_net",
     "saving_pct", "saving_eur_per_unit", "suggested_qty",
 ]
@@ -27,21 +27,25 @@ def load_data(db_path: str) -> list:
                 COALESCE(p.brand, '') AS brand,
                 COALESCE(p.description, '') AS description,
                 COALESCE(idat.current_stock, 0) AS current_stock,
+                COALESCE(idat.qnt_pending, 0) AS qnt_pending,
                 COALESCE(idat.sales90d, 0) AS sales_90d,
                 COALESCE(idat.avg_stock_price, 0) AS avg_stock_price,
-                sp.price_net AS supplier_price_net
+                MIN(sp.price_net) AS supplier_price_net,
+                SUM(sp.quantity) AS supplier_quantity
             FROM supplier_prices sp
             JOIN processing_runs pr ON sp.run_id = pr.id
             JOIN (
                 SELECT sp2.ean, sp2.supplier, MAX(pr2.run_at) AS max_run_at
                 FROM supplier_prices sp2
                 JOIN processing_runs pr2 ON sp2.run_id = pr2.id
+                WHERE sp2.price_net > 0
+                  AND (sp2.valid_until IS NULL OR sp2.valid_until >= DATE('now'))
                 GROUP BY sp2.ean, sp2.supplier
             ) latest ON sp.ean = latest.ean
                        AND sp.supplier = latest.supplier
                        AND pr.run_at = latest.max_run_at
             JOIN (
-                SELECT idat2.ean, idat2.current_stock, idat2.sales90d, idat2.avg_stock_price
+                SELECT idat2.ean, idat2.current_stock, idat2.qnt_pending, idat2.sales90d, idat2.avg_stock_price
                 FROM internal_data idat2
                 JOIN processing_runs pr3 ON idat2.run_id = pr3.id
                 WHERE pr3.run_at = (SELECT MAX(run_at) FROM processing_runs)
@@ -51,6 +55,9 @@ def load_data(db_path: str) -> list:
             ) lp ON sp.ean = lp.ean
             LEFT JOIN products p ON p.rowid = lp.rid
             WHERE sp.price_net > 0
+              AND (sp.valid_until IS NULL OR sp.valid_until >= DATE('now'))
+            GROUP BY sp.supplier, sp.ean, p.brand, p.description,
+                     idat.current_stock, idat.qnt_pending, idat.sales90d, idat.avg_stock_price
         """).fetchall()
     return [dict(r) for r in rows]
 
@@ -58,48 +65,68 @@ def load_data(db_path: str) -> list:
 def score_opportunities(rows: list, threshold: float) -> dict:
     suppliers = defaultdict(lambda: {"need": [], "price": []})
 
+    ean_groups = defaultdict(list)
     for r in rows:
-        supplier = r["supplier"]
-        avg_price = r["avg_stock_price"] or 0.0
-        sup_price = r["supplier_price_net"]
-        sales_90d = r["sales_90d"]
-        stock = r["current_stock"]
-        net_need = sales_90d - stock
+        ean_groups[r["ean"]].append(r)
 
-        if sup_price <= 0:
+    for ean, ean_rows in ean_groups.items():
+        first = ean_rows[0]
+        sales_90d = first["sales_90d"]
+        stock = first["current_stock"]
+        pending = first["qnt_pending"]
+        net_need = sales_90d - stock - pending
+
+        if net_need <= 0:
             continue
-        if avg_price > 0 and sup_price > avg_price * 10:
-            continue
 
-        saving_pct = 0.0
-        saving_eur_per_unit = 0.0
-        if avg_price > 0:
-            saving_pct = (avg_price - sup_price) / avg_price * 100
-            saving_eur_per_unit = avg_price - sup_price
+        ean_rows.sort(key=lambda r: r["supplier_price_net"])
 
-        row_data = {
-            "ean": r["ean"],
-            "brand": r["brand"],
-            "description": r["description"],
-            "current_stock": stock,
-            "sales_90d": sales_90d,
-            "net_need": net_need,
-            "avg_stock_price": round(avg_price, 2),
-            "supplier_price_net": round(sup_price, 2),
-            "saving_pct": round(saving_pct, 1),
-            "saving_eur_per_unit": round(saving_eur_per_unit, 2),
-            "suggested_qty": 0,
-        }
+        remaining = net_need
+        for r in ean_rows:
+            if remaining <= 0:
+                break
 
-        if net_need > 0 and avg_price > 0 and saving_pct >= threshold:
-            # Best opportunity: understocked AND supplier price is significantly cheaper
-            row_data["opportunity_type"] = "PRICE"
-            row_data["suggested_qty"] = net_need
-            suppliers[supplier]["price"].append(row_data)
-        elif net_need > 0:
-            row_data["opportunity_type"] = "NEED"
-            row_data["suggested_qty"] = net_need
-            suppliers[supplier]["need"].append(row_data)
+            supplier = r["supplier"]
+            avg_price = r["avg_stock_price"] or 0.0
+            sup_price = r["supplier_price_net"]
+
+            if sup_price <= 0:
+                continue
+            if avg_price > 0 and sup_price > avg_price * 10:
+                continue
+
+            sup_qty = r["supplier_quantity"] or 0
+            allocated = remaining if sup_qty == 0 else min(sup_qty, remaining)
+            remaining -= allocated
+
+            saving_pct = 0.0
+            saving_eur_per_unit = 0.0
+            if avg_price > 0:
+                saving_pct = (avg_price - sup_price) / avg_price * 100
+                saving_eur_per_unit = avg_price - sup_price
+
+            row_data = {
+                "ean": ean,
+                "brand": r["brand"],
+                "description": r["description"],
+                "current_stock": stock,
+                "qnt_pending": pending,
+                "supplier_quantity": sup_qty,
+                "sales_90d": sales_90d,
+                "net_need": net_need,
+                "avg_stock_price": round(avg_price, 2),
+                "supplier_price_net": round(sup_price, 2),
+                "saving_pct": round(saving_pct, 1),
+                "saving_eur_per_unit": round(saving_eur_per_unit, 2),
+                "suggested_qty": allocated,
+            }
+
+            if avg_price > 0 and saving_pct >= threshold:
+                row_data["opportunity_type"] = "PRICE"
+                suppliers[supplier]["price"].append(row_data)
+            else:
+                row_data["opportunity_type"] = "NEED"
+                suppliers[supplier]["need"].append(row_data)
 
     for sup_data in suppliers.values():
         sup_data["need"].sort(key=lambda x: (-x["net_need"], -x["saving_pct"]))
