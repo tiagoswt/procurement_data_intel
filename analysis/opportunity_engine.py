@@ -231,9 +231,15 @@ class SimpleOpportunityEngine:
         beats_supplier = price_analysis["beats_supplier"]
         beats_stock_avg = price_analysis["beats_stock_avg"]
 
-        # Priority 1: Quote beats ALL 3 internal prices
-        if beats_best_buy and beats_supplier and beats_stock_avg:
-            # Baseline is minimum of all 3 prices
+        valid_count = price_analysis["valid_prices_count"]
+        beaten_count = price_analysis["total_prices_beaten"]
+
+        has_best_buy = best_buy_price is not None and best_buy_price > 0
+        has_supplier = supplier_price is not None and supplier_price > 0
+        has_stock_avg = stock_avg_price is not None and stock_avg_price > 0
+
+        # Priority 1: Quote beats ALL available prices (requires at least 2 available)
+        if beaten_count == valid_count and valid_count >= 2:
             all_prices = [
                 p
                 for p in [best_buy_price, supplier_price, stock_avg_price]
@@ -246,27 +252,25 @@ class SimpleOpportunityEngine:
                 "description": "Better than ALL internal prices",
             }
 
-        # Priority 2: Quote beats stockAvgPrice AND supplierPrice but NOT bestbuyPrice
-        elif beats_supplier and beats_stock_avg and not beats_best_buy:
-            # Baseline is minimum of stockAvgPrice and supplierPrice
+        # Priority 2: Quote beats all available operational prices (stock_avg and/or supplier)
+        # but NOT bestbuyPrice. Works when supplier_price is absent from internal data.
+        has_any_op = has_stock_avg or has_supplier
+        beats_all_op = (not has_stock_avg or beats_stock_avg) and \
+                       (not has_supplier or beats_supplier)
+
+        if has_any_op and beats_all_op and not beats_best_buy:
             operational_prices = [
                 p for p in [supplier_price, stock_avg_price] if p is not None and p > 0
             ]
-            return {
-                "priority": 2,
-                "priority_label": "⭐ Priority 2",
-                "baseline_price": (
-                    min(operational_prices) if operational_prices else None
-                ),
-                "description": "Better than operational prices",
-            }
+            if operational_prices:
+                return {
+                    "priority": 2,
+                    "priority_label": "⭐ Priority 2",
+                    "baseline_price": min(operational_prices),
+                    "description": "Better than operational prices",
+                }
 
-        # REMOVED: Priority 3 - No longer accepting opportunities that only beat some prices
-        # Previously this was: beats_supplier OR beats_stock_avg (but not both + bestbuy)
-
-        # No priority - quote doesn't meet Priority 1 or 2 criteria
-        else:
-            return None
+        return None
 
     def _get_bestseller_stars(self, bestseller_rank: Optional[int]) -> str:
         """Convert bestseller rank to star display (inverse relationship)"""
