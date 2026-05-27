@@ -150,3 +150,10 @@ def test_save_internal_data_handles_missing_new_fields(tmp_db, sample_products, 
     tmp_db.save_internal_data(run_id, sample_internal)  # should not raise
     data = tmp_db.get_latest_internal_data()
     assert len(data) == 2
+
+
+def test_create_run_returns_run_id(tmp_db):
+    run_id = tmp_db.create_run(source_files=["internal_only.csv"], row_count=42)
+    assert isinstance(run_id, str) and len(run_id) > 0
+    runs = tmp_db.get_runs()
+    assert any(r["id"] == run_id for r in runs)

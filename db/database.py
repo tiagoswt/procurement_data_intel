@@ -181,6 +181,18 @@ class ProcurementDB:
             logger.error(f"Failed to save internal data: {e}")
             raise
 
+    def create_run(self, source_files: List[str], row_count: int = 0) -> str:
+        """Create a bare processing run record and return its ID."""
+        run_id = str(uuid.uuid4())
+        run_at = datetime.utcnow().isoformat()
+        with self._get_conn() as conn:
+            conn.execute(
+                "INSERT INTO processing_runs (id, run_at, source_files, row_count) VALUES (?, ?, ?, ?)",
+                (run_id, run_at, json.dumps(source_files), row_count),
+            )
+        logger.info(f"Run created: run_id={run_id}")
+        return run_id
+
     def get_runs(self) -> List[Dict]:
         with self._get_conn() as conn:
             rows = conn.execute(
