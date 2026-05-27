@@ -231,12 +231,18 @@ def opportunities_tab(groq_api_key, api_key_valid=False):
                 # Show data summary
                 show_internal_data_summary(engine)
                 # Persist internal data to SQLite
-                run_id = st.session_state.get("current_run_id")
-                if run_id and engine.internal_data:
-                    try:
-                        ProcurementDB().save_internal_data(run_id, engine.internal_data)
-                    except Exception:
-                        pass
+                try:
+                    db = ProcurementDB()
+                    run_id = st.session_state.get("current_run_id")
+                    if not run_id:
+                        run_id = db.create_run(
+                            source_files=["internal_data"],
+                            row_count=len(engine.internal_data),
+                        )
+                        st.session_state.current_run_id = run_id
+                    db.save_internal_data(run_id, engine.internal_data)
+                except Exception as _e:
+                    st.warning(f"⚠️ Internal data loaded but could not be saved to database: {_e}")
                 show_smart_opportunity_analysis(engine)
             else:
                 st.error(
