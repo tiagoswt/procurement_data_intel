@@ -243,7 +243,10 @@ class ProcurementDB:
     def get_latest_internal_data(self) -> List[Dict]:
         with self._get_conn() as conn:
             latest = conn.execute(
-                "SELECT id FROM processing_runs ORDER BY run_at DESC LIMIT 1"
+                """SELECT DISTINCT idat.run_id, pr.run_at
+                   FROM internal_data idat
+                   JOIN processing_runs pr ON idat.run_id = pr.id
+                   ORDER BY pr.run_at DESC LIMIT 1"""
             ).fetchone()
             if not latest:
                 return []
@@ -255,7 +258,7 @@ class ProcurementDB:
                    ) latest_p ON idat.ean = latest_p.ean
                    LEFT JOIN products p ON p.rowid = latest_p.rid
                    WHERE idat.run_id = ?""",
-                (latest["id"],),
+                (latest["run_id"],),
             ).fetchall()
         return [dict(r) for r in rows]
 

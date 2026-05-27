@@ -84,3 +84,18 @@ def test_get_runs_returns_list(tmp_db, sample_products):
     assert len(runs) == 1
     assert "run_at" in runs[0]
     assert "source_files" in runs[0]
+
+
+def test_get_latest_internal_data_ignores_runs_without_internal_data(tmp_db, sample_products, sample_internal):
+    # First run: supplier batch + internal data
+    run_id_1 = tmp_db.save_supplier_batch(["file_a.xlsx"], sample_products)
+    tmp_db.save_internal_data(run_id_1, sample_internal)
+
+    # Second run: supplier batch only (no internal data attached)
+    tmp_db.save_supplier_batch(["file_b.xlsx"], sample_products)
+
+    # Should still return the internal data from run 1, not empty
+    data = tmp_db.get_latest_internal_data()
+    assert len(data) == 2, f"Expected 2 rows, got {len(data)}"
+    eans = {r["ean"] for r in data}
+    assert "3433422404397" in eans
