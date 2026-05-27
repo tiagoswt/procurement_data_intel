@@ -57,6 +57,7 @@ import yaml as _yaml
 from normalize import NormalizeError, ingest
 from normalize.detect import detect_supplier
 from normalize.wizard import suggest_profile
+from normalize.profile import list_profiles, load_profile, add_filename_pattern
 
 # Configure page
 st.set_page_config(
@@ -124,6 +125,68 @@ from file_manager import (
 # =============================================================================
 
 
+def _db_row_to_internal_dict(row: dict) -> dict:
+    rank = row.get("bestseller_rank")
+    return {
+        "ean":                     row["ean"],
+        "stock":                   row.get("current_stock", 0),
+        "sales90d":                row.get("sales90d", 0),
+        "sales180d":               row.get("sales180d", 0),
+        "sales365d":               row.get("sales365d", 0),
+        "best_buy_price":          row.get("best_buy_price"),
+        "stock_avg_price":         row.get("avg_stock_price"),
+        "qntPendingToDeliver":     row.get("qnt_pending", 0),
+        "supplier_price":          row.get("supplier_price"),
+        "bestseller_rank":         rank,
+        "is_bestseller":           rank in (1, 2),
+        "brand":                   row.get("brand", ""),
+        "description":             row.get("description", ""),
+        "cnp":                     "",
+        "capacity":                "",
+        "sales_next90d_lastyear":  0,
+        "best_supplier":           "",
+        "is_active":               True,
+    }
+
+
+def _bootstrap_from_db() -> None:
+    if st.session_state.get("_db_bootstrapped"):
+        return
+    try:
+        db = ProcurementDB()
+
+        # Supplier data
+        if not st.session_state.get("processed_data"):
+            rows = db.get_all_supplier_prices(active_only=True)
+            if rows:
+                st.session_state.processed_data = [
+                    ProductData(
+                        ean_code=r["ean"],
+                        supplier=r["supplier"],
+                        price=r["price_net"],
+                        quantity=r["quantity"],
+                        product_name=r["description"],
+                    )
+                    for r in rows
+                ]
+
+        # Internal data — initialize engine if not yet created
+        if "opportunity_engine" not in st.session_state:
+            from analysis.opportunity_engine import SimpleOpportunityEngine
+            st.session_state.opportunity_engine = SimpleOpportunityEngine()
+
+        engine = st.session_state.opportunity_engine
+        if not engine.internal_data:
+            rows = db.get_latest_internal_data()
+            if rows:
+                engine.internal_data = [_db_row_to_internal_dict(r) for r in rows]
+
+    except Exception:
+        pass  # DB unavailable — tabs will show their normal upload prompts
+    finally:
+        st.session_state._db_bootstrapped = True
+
+
 def main():
     """Main application function with Phase 3 simplified sidebar"""
 
@@ -132,6 +195,9 @@ def main():
 
     # Require authentication before proceeding
     require_auth(auth)
+
+    # Restore data from DB if session state is empty (page refresh / new session)
+    _bootstrap_from_db()
 
     # =============================================================================
     # PHASE 3: SINGLE SIMPLIFIED SIDEBAR (removes all duplicate sidebar blocks)
@@ -180,6 +246,27 @@ def main():
             st.session_state.enhanced_order_optimizer = EnhancedOrderOptimizer()
 
             st.success("✅ All data has been reset!")
+            time.sleep(1)
+            st.rerun()
+
+        st.divider()
+        st.caption("☢️ Danger Zone")
+        if st.button("🗑️ Clear Database", key="clear_db_btn", type="primary"):
+            from db.database import ProcurementDB
+            ProcurementDB().clear_all_data()
+            for key in ["processed_data", "processing_results", "price_analysis",
+                        "buying_lists", "manual_order_files", "opportunity_engine",
+                        "file_manager", "pending_profiles"]:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.session_state.processed_data = []
+            st.session_state.processing_results = []
+            st.session_state.price_analysis = None
+            st.session_state.order_optimizer = OrderOptimizer()
+            st.session_state.buying_lists = []
+            from enhanced_order_optimizer import EnhancedOrderOptimizer
+            st.session_state.enhanced_order_optimizer = EnhancedOrderOptimizer()
+            st.success("✅ Database cleared!")
             time.sleep(1)
             st.rerun()
 
@@ -476,6 +563,7 @@ def _ingest_with_fallback(
     uploaded_file,
     supplier_name: str,
     processor,
+    profile_code=None,
 ):
     """Try profile-based ingest; fall back to legacy processor on NormalizeError.
 
@@ -490,8 +578,8 @@ def _ingest_with_fallback(
         with open(tmp_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        products, warnings = ingest(tmp_path)
-        matched_code = detect_supplier(uploaded_file.name)
+        products, warnings = ingest(tmp_path, supplier_name=supplier_name, supplier_code=profile_code)
+        matched_code = profile_code or detect_supplier(uploaded_file.name)
         return products, warnings, f"Profile: {matched_code}"
 
     except NormalizeError:
@@ -548,8 +636,14 @@ def _handle_profile_accept(
         with open(tmp_path, "wb") as f:
             f.write(entry["file_bytes"])
 
-        products, warnings = ingest(tmp_path)
+        products, warnings = ingest(tmp_path, supplier_name=entry.get("supplier_name"))
         st.session_state.processed_data.extend(products)
+        try:
+            db = ProcurementDB()
+            run_id = db.save_supplier_batch([filename], products)
+            st.session_state.current_run_id = run_id
+        except Exception as _db_err:
+            st.warning(f"⚠️ Could not save to database: {_db_err}")
         st.success(
             f"✅ **{filename}**: {len(products)} products — Profile: {supplier_code}"
         )
@@ -591,6 +685,12 @@ def _handle_profile_reject(filename: str, entry: dict, processor) -> None:
     )
     if result.success:
         st.session_state.processed_data.extend(result.products)
+        try:
+            db = ProcurementDB()
+            run_id = db.save_supplier_batch([filename], result.products)
+            st.session_state.current_run_id = run_id
+        except Exception as _db_err:
+            st.warning(f"⚠️ Could not save to database: {_db_err}")
         st.success(
             f"✅ **{filename}**: {len(result.products)} products — AI detection"
         )
@@ -706,6 +806,7 @@ def manual_supplier_processing(groq_api_key):
             help="Use AI to automatically detect and map data fields. Uncheck for manual field mapping.",
         )
 
+    with col2:
         max_file_size = st.number_input(
             "Max File Size (MB)",
             min_value=1,
@@ -714,41 +815,54 @@ def manual_supplier_processing(groq_api_key):
             help="Maximum file size allowed for upload",
         )
 
-    with col2:
-        supplier_name_option = st.radio(
-            "Supplier Name",
-            options=["Auto (from filename)", "Manual input"],
-            help="How to determine the supplier name for each file",
-        )
-
-        if supplier_name_option == "Manual input":
-            manual_supplier_name = st.text_input(
-                "Supplier Name",
-                placeholder="Enter supplier name (will be used for all uploaded files)",
-                help="This name will be applied to all uploaded files",
-            )
-        else:
-            manual_supplier_name = None
-
-    # Supplier preview — show extracted name and new/existing status per file
+    # Per-file supplier assignment
+    per_file_overrides: dict[str, str | None] = {}
+    per_file_names: dict[str, str | None] = {}
     if uploaded_files:
+        st.markdown("**📋 Supplier Assignment**")
+        _profile_options = ["Auto (from filename)"] + sorted(list_profiles()) + ["➕ New Supplier"]
         db_preview = ProcurementDB()
         existing_suppliers = [s.lower() for s in db_preview.get_distinct_suppliers()]
 
-        st.markdown("**📋 Supplier Preview**")
-        for f in uploaded_files:
-            name = manual_supplier_name if manual_supplier_name else extract_supplier_name(Path(f.name).stem)
-            col_a, col_b = st.columns([3, 1])
+        for i, f in enumerate(uploaded_files):
+            auto_detected = detect_supplier(f.name)
+            default_idx = _profile_options.index(auto_detected) if auto_detected and auto_detected in _profile_options else 0
+            col_a, col_b, col_c = st.columns([3, 3, 1])
             with col_a:
-                st.write(f"📄 `{f.name}` → **{name}**")
+                st.write(f"📄 `{f.name}`")
             with col_b:
-                profile_code = detect_supplier(f.name)
-                if profile_code:
-                    st.success(f"📋 Profile: {profile_code}")
-                elif name.lower() in existing_suppliers:
-                    st.info("✅ Registered")
+                selected = st.selectbox(
+                    "Supplier",
+                    options=_profile_options,
+                    index=default_idx,
+                    key=f"file_supplier_{i}_{f.name}",
+                    label_visibility="collapsed",
+                )
+            with col_c:
+                if selected in ("Auto (from filename)", "➕ New Supplier"):
+                    override_code = None
                 else:
-                    st.info("🔍 AI detection")
+                    override_code = selected
+                if override_code:
+                    st.success(f"📋 {override_code}")
+                elif auto_detected and selected != "➕ New Supplier":
+                    st.success(f"📋 {auto_detected}")
+                elif selected == "➕ New Supplier":
+                    st.info("✏️ New")
+                else:
+                    name = extract_supplier_name(Path(f.name).stem)
+                    if name.lower() in existing_suppliers:
+                        st.info("✅ Registered")
+                    else:
+                        st.info("🔍 AI")
+            per_file_overrides[f.name] = override_code
+            if selected == "➕ New Supplier":
+                custom_name = st.text_input(
+                    f"Supplier name for {f.name}",
+                    placeholder="Enter supplier name",
+                    key=f"file_supplier_name_{i}_{f.name}",
+                )
+                per_file_names[f.name] = custom_name or None
 
     # Process files button
     if st.button("🚀 Process Supplier Files", type="primary", key="manual_process_btn"):
@@ -757,7 +871,8 @@ def manual_supplier_processing(groq_api_key):
             groq_api_key,
             auto_detect_fields,
             max_file_size,
-            manual_supplier_name,
+            per_file_overrides=per_file_overrides,
+            per_file_names=per_file_names,
         )
 
     # Always rendered — review cards persist across re-runs until resolved
@@ -769,7 +884,8 @@ def process_manual_supplier_files(
     groq_api_key,
     auto_detect_fields,
     max_file_size,
-    manual_supplier_name,
+    per_file_overrides: dict | None = None,
+    per_file_names: dict | None = None,
 ):
     """Process manually uploaded supplier files"""
 
@@ -803,15 +919,27 @@ def process_manual_supplier_files(
                 )
                 continue
 
-            # Determine supplier name
-            if manual_supplier_name:
-                supplier_name = manual_supplier_name
+            # Determine profile and supplier name (per-file override takes priority)
+            override_code = (per_file_overrides or {}).get(uploaded_file.name)
+            typed_name = (per_file_names or {}).get(uploaded_file.name)
+            if override_code:
+                profile_code = override_code
+                try:
+                    supplier_name = load_profile(override_code).get("supplier_name", override_code)
+                except Exception:
+                    supplier_name = override_code
+            elif typed_name:
+                profile_code = detect_supplier(uploaded_file.name)
+                supplier_name = typed_name
             else:
-                supplier_name = extract_supplier_name(Path(uploaded_file.name).stem)
-
-            # Files with a known profile process immediately.
-            # Unknown files get a Groq-generated draft queued for review.
-            profile_code = detect_supplier(uploaded_file.name)
+                profile_code = detect_supplier(uploaded_file.name)
+                if profile_code:
+                    try:
+                        supplier_name = load_profile(profile_code).get("supplier_name", profile_code)
+                    except Exception:
+                        supplier_name = extract_supplier_name(Path(uploaded_file.name).stem)
+                else:
+                    supplier_name = extract_supplier_name(Path(uploaded_file.name).stem)
             if profile_code is None:
                 gen_tmp = None
                 try:
@@ -847,7 +975,7 @@ def process_manual_supplier_files(
             with st.spinner(f"Processing {uploaded_file.name}..."):
                 t0 = time.time()
                 products, warnings, processing_mode = _ingest_with_fallback(
-                    uploaded_file, supplier_name, processor
+                    uploaded_file, supplier_name, processor, profile_code=profile_code
                 )
                 elapsed = time.time() - t0
 
@@ -863,6 +991,12 @@ def process_manual_supplier_files(
                         total_products=len(products),
                     )
                 )
+
+                if override_code:
+                    try:
+                        add_filename_pattern(override_code, uploaded_file.name)
+                    except Exception:
+                        pass
 
                 ean_count = sum(1 for p in products if p.ean_code)
                 supplier_count = sum(1 for p in products if p.supplier_code)
@@ -919,14 +1053,13 @@ def process_manual_supplier_files(
         st.session_state.processed_data = all_products
         st.session_state.processing_results = all_results
 
-        # Auto-save to SQLite (additive — never blocks the UI if it fails)
+        # Auto-save to SQLite
         try:
             db = ProcurementDB()
-            source_file_names = [f.name for f in uploaded_files]
-            run_id = db.save_supplier_batch(source_file_names, all_products)
+            run_id = db.save_supplier_batch([f.name for f in uploaded_files], all_products)
             st.session_state.current_run_id = run_id
         except Exception as _db_err:
-            pass  # DB save is best-effort; processing still succeeds
+            st.warning(f"⚠️ Products processed but could not be saved to database: {_db_err}")
 
         # Show final summary
         total_products = len(all_products)
