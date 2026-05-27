@@ -159,7 +159,7 @@ def _bootstrap_from_db() -> None:
 
         # Supplier data
         if not st.session_state.get("processed_data"):
-            rows = db.get_all_supplier_prices(active_only=True)
+            rows = db.get_all_supplier_prices(active_only=True, latest_per_supplier=True)
             if rows:
                 st.session_state.processed_data = [
                     ProductData(

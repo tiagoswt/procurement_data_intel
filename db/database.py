@@ -237,10 +237,21 @@ class ProcurementDB:
             for r in rows
         ]
 
-    def get_all_supplier_prices(self, active_only: bool = False) -> List[Dict]:
-        where = ""
+    def get_all_supplier_prices(
+        self, active_only: bool = False, latest_per_supplier: bool = False
+    ) -> List[Dict]:
+        filters = []
         if active_only:
-            where = "WHERE (sp.valid_until IS NULL OR sp.valid_until >= date('now'))"
+            filters.append("(sp.valid_until IS NULL OR sp.valid_until >= date('now'))")
+        if latest_per_supplier:
+            filters.append(
+                "pr.run_at = ("
+                "  SELECT MAX(pr2.run_at) FROM supplier_prices sp2"
+                "  JOIN processing_runs pr2 ON sp2.run_id = pr2.id"
+                "  WHERE sp2.supplier = sp.supplier"
+                ")"
+            )
+        where = ("WHERE " + " AND ".join(filters)) if filters else ""
         with self._get_conn() as conn:
             rows = conn.execute(
                 f"""SELECT sp.ean, sp.supplier, sp.price_net, sp.quantity, pr.run_at,
