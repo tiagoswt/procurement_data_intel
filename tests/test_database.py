@@ -1,5 +1,6 @@
 import pytest
 import tempfile
+from datetime import date, timedelta
 from pathlib import Path
 from db.database import ProcurementDB
 from models import ProductData
@@ -99,3 +100,28 @@ def test_get_latest_internal_data_ignores_runs_without_internal_data(tmp_db, sam
     assert len(data) == 2, f"Expected 2 rows, got {len(data)}"
     eans = {r["ean"] for r in data}
     assert "3433422404397" in eans
+
+
+def test_get_all_supplier_prices_active_only_excludes_expired(tmp_db):
+    products_exp  = [ProductData(ean_code="1111111111111", supplier="SupExp",  price=5.0, quantity=10)]
+    products_act  = [ProductData(ean_code="2222222222222", supplier="SupAct",  price=6.0, quantity=10)]
+    products_none = [ProductData(ean_code="3333333333333", supplier="SupNone", price=7.0, quantity=10)]
+
+    tmp_db.save_supplier_batch(["exp.csv"],  products_exp,  validity_days={"SupExp":  -1})
+    tmp_db.save_supplier_batch(["act.csv"],  products_act,  validity_days={"SupAct":  30})
+    tmp_db.save_supplier_batch(["none.csv"], products_none)
+
+    rows = tmp_db.get_all_supplier_prices(active_only=True)
+    eans = {r["ean"] for r in rows}
+    assert "1111111111111" not in eans, "Expired offer should be excluded"
+    assert "2222222222222" in eans,     "Active offer should be included"
+    assert "3333333333333" in eans,     "No-expiry offer should be included"
+
+
+def test_get_all_supplier_prices_default_includes_expired(tmp_db):
+    products_exp = [ProductData(ean_code="1111111111111", supplier="SupExp", price=5.0, quantity=10)]
+    tmp_db.save_supplier_batch(["exp.csv"], products_exp, validity_days={"SupExp": -1})
+
+    rows = tmp_db.get_all_supplier_prices()
+    eans = {r["ean"] for r in rows}
+    assert "1111111111111" in eans, "Default (active_only=False) should include expired"

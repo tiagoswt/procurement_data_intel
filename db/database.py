@@ -214,17 +214,21 @@ class ProcurementDB:
             for r in rows
         ]
 
-    def get_all_supplier_prices(self) -> List[Dict]:
+    def get_all_supplier_prices(self, active_only: bool = False) -> List[Dict]:
+        where = ""
+        if active_only:
+            where = "WHERE (sp.valid_until IS NULL OR sp.valid_until >= date('now'))"
         with self._get_conn() as conn:
             rows = conn.execute(
-                """SELECT sp.ean, sp.supplier, sp.price_net, sp.quantity, pr.run_at,
-                          p.brand, p.description
+                f"""SELECT sp.ean, sp.supplier, sp.price_net, sp.quantity, pr.run_at,
+                           p.brand, p.description
                    FROM supplier_prices sp
                    JOIN processing_runs pr ON sp.run_id = pr.id
                    LEFT JOIN (
                        SELECT ean, MAX(rowid) AS rid FROM products GROUP BY ean
                    ) latest_p ON sp.ean = latest_p.ean
                    LEFT JOIN products p ON p.rowid = latest_p.rid
+                   {where}
                    ORDER BY pr.run_at DESC"""
             ).fetchall()
         return [
