@@ -73,7 +73,15 @@ class ProcurementDB:
             try:
                 conn.execute("ALTER TABLE supplier_prices ADD COLUMN valid_until DATE")
             except Exception:
-                pass  # column already exists
+                pass
+            try:
+                conn.execute("ALTER TABLE internal_data ADD COLUMN supplier_price REAL")
+            except Exception:
+                pass
+            try:
+                conn.execute("ALTER TABLE internal_data ADD COLUMN bestseller_rank INT")
+            except Exception:
+                pass
 
     def _normalize_supplier_names(self):
         """Retroactively strip _DDMMYYYY date suffix from supplier names already in the DB."""
@@ -152,8 +160,9 @@ class ProcurementDB:
                     conn.execute(
                         """INSERT INTO internal_data
                            (ean, run_id, current_stock, sales90d, sales180d, sales365d,
-                            best_buy_price, avg_stock_price, qnt_pending)
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                            best_buy_price, avg_stock_price, qnt_pending,
+                            supplier_price, bestseller_rank)
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                         (
                             ean, run_id,
                             p.get("stock", 0),
@@ -163,6 +172,8 @@ class ProcurementDB:
                             p.get("best_buy_price"),
                             p.get("stock_avg_price"),
                             p.get("qntPendingToDeliver", 0),
+                            p.get("supplier_price"),
+                            p.get("bestseller_rank"),
                         ),
                     )
             logger.info(f"Internal data saved: {len(internal_products)} products for run {run_id}")

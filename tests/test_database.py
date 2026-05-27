@@ -125,3 +125,28 @@ def test_get_all_supplier_prices_default_includes_expired(tmp_db):
     rows = tmp_db.get_all_supplier_prices()
     eans = {r["ean"] for r in rows}
     assert "1111111111111" in eans, "Default (active_only=False) should include expired"
+
+
+def test_save_internal_data_persists_supplier_price_and_bestseller_rank(tmp_db, sample_products):
+    run_id = tmp_db.save_supplier_batch(["file_a.xlsx"], sample_products)
+    internal = [
+        {"ean": "3433422404397", "stock": 100, "sales90d": 50,
+         "sales180d": 100, "sales365d": 200,
+         "best_buy_price": 9.20, "stock_avg_price": 9.10,
+         "supplier_price": 9.50, "bestseller_rank": 1,
+         "qntPendingToDeliver": 0, "brand": "L'Oréal", "description": "Serum"},
+    ]
+    tmp_db.save_internal_data(run_id, internal)
+    data = tmp_db.get_latest_internal_data()
+    assert len(data) == 1
+    row = data[0]
+    assert row["supplier_price"] == 9.50
+    assert row["bestseller_rank"] == 1
+
+
+def test_save_internal_data_handles_missing_new_fields(tmp_db, sample_products, sample_internal):
+    # sample_internal fixtures don't have supplier_price/bestseller_rank — must not crash
+    run_id = tmp_db.save_supplier_batch(["file_a.xlsx"], sample_products)
+    tmp_db.save_internal_data(run_id, sample_internal)  # should not raise
+    data = tmp_db.get_latest_internal_data()
+    assert len(data) == 2
