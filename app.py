@@ -11,6 +11,7 @@ import csv
 import time
 import os
 import tempfile
+import logging
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
@@ -69,6 +70,7 @@ st.set_page_config(
 
 # Setup logging
 setup_logging("INFO")
+logger = logging.getLogger(__name__)
 
 # Initialize session state
 if "processed_data" not in st.session_state:
@@ -181,8 +183,8 @@ def _bootstrap_from_db() -> None:
             if rows:
                 engine.internal_data = [_db_row_to_internal_dict(r) for r in rows]
 
-    except Exception:
-        pass  # DB unavailable — tabs will show their normal upload prompts
+    except Exception as _e:
+        logger.warning(f"DB bootstrap failed: {_e}")  # DB unavailable — tabs will show their normal upload prompts
     finally:
         st.session_state._db_bootstrapped = True
 
@@ -225,6 +227,7 @@ def main():
                 "opportunity_engine",
                 "file_manager",
                 "pending_profiles",
+                "_db_bootstrapped",
             ]
             for key in keys_to_reset:
                 if key in st.session_state:
@@ -256,7 +259,7 @@ def main():
             ProcurementDB().clear_all_data()
             for key in ["processed_data", "processing_results", "price_analysis",
                         "buying_lists", "manual_order_files", "opportunity_engine",
-                        "file_manager", "pending_profiles"]:
+                        "file_manager", "pending_profiles", "_db_bootstrapped"]:
                 if key in st.session_state:
                     del st.session_state[key]
             st.session_state.processed_data = []
